@@ -7,6 +7,7 @@ MULTICREATE =D
 
 
 Multicreate is a game inspired by minecraft but 2d and more un realistic textures =D and it is from the multicreate (the one with out textures) and it tool me so far and wide also it was all made by deepseek and chatgpt so ty for making this game for me also the images where made by me in piskel 
+**placing blocks**
 
 right click and c 
 opens the menu for
@@ -14,6 +15,7 @@ opens the menu for
 the menu for mobs =D
 
  **igniting tnt**
+ 
  is middle click and 
 also if you middle 
 click air and you have 1 
@@ -22,6 +24,7 @@ click air and you have 1
  sound
                                                                               
   **deleting blocks / mobs**
+
  just click them with left click
 
                                                                         
