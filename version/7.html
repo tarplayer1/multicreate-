@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multicreate Save/Load</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      background-color: #87CEEB;
+    }
+
+    .menu-container {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+      width: 200px;
+      height: 300px;
+      background-color: rgba(0, 0, 0, 0.8);
+      overflow-y: scroll;
+      padding: 10px;
+      border-radius: 5px;
+      display: none; /* Hide menu by default */
+    }
+
+    .menu-item {
+      color: white;
+      font-size: 20px;
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .menu-item:hover {
+      background-color: yellow;
+    }
+
+    .menu-item.selected {
+      background-color: blue;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+  </style>
+              <link rel="icon" type="image/x-icon" href="../asset/grass.png">
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="menuContainer" class="menu-container">
+    <input type="text" class="search-input" placeholder="Search blocks..." />
+    <div id="menuItems"></div>
+  </div>
+
+  <script>
+    alert("click the screen")
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const menuContainer = document.getElementById("menuContainer");
+    const searchInput = document.querySelector(".search-input");
+    const menuItems = document.getElementById("menuItems");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const blockSize = 50;
+    const world = [];
+    const blockTextures = {
+      "Grass": "../1/grass.png",
+  "Dirt": "../1/dirt.png",
+  "Stone": "../1/stone.png",
+  "Sand": "../1/sand.png",
+  "Wood": "../1/wood.png",
+  "Brick": "../1/brick.png",
+  "Water": "../1/water.png",
+  "Lava": "../1/lava.png",
+  "Leaf": "../1/leaves.png",
+  "netherack": "../1/neth.png",
+  "beacon": "../1/beacon.png",
+  "blue glass": "../1/bglass.png",
+  "black shulker box": "../1/blacks.png",
+  "black wool": "../1/blackw.png",
+  "blue shulker box": "../1/blues.png",
+  "blue wool": "../1/bluew.png",
+  "coal ore": "../1/coal.png",
+  "copper ore": "../1/copper.png",
+  "crying obsidian": "../1/cryo.png",
+  "diamond ore": "../1/diamond.png",
+  "green glass": "../1/gglass.png",
+  "glass": "../1/glass.png",
+  "gold ore": "../1/gold.png",
+  "gray shulker box": "../1/grays.png",
+  "gray wool": "../1/grayw.png",
+  "green shulker box": "../1/greens.png",
+  "green wool": "../1/greenw.png",
+  "iron ore": "../1/iron.png",
+  "lapiz block": "../1/lapiz.png",
+  "lightblue glass": "../1/lbglass.png",
+  "light blue wool": "../1/lightbw.png",
+  "magenta shulker box": "../1/magentas.png",
+  "magenta wool": "../1/magentaw.png",
+  "magenta glass": "../1/mglass.png",
+  "obsidian": "../1/obsidian.png",
+  "orange shulker box": "../1/oranges.png",
+  "orange wool": "../1/orangew.png",
+  "purple glass": "../1/pglass.png",
+  "purple shulker box": "../1/purples.png",
+  "purple wool": "../1/purplew.png",
+  "quartz ore": "../1/quart.png",
+  "red shulker box": "../1/reds.png",
+  "redstone ore": "../1/redstone.png",
+  "red wool": "../1/redw.png",
+  "red glass": "../1/rglass.png",
+  "slime block": "../1/slime.png",
+  "TNT": "../1/tnt.png",
+  "white shulker box": "../1/whites.png",
+  "white wool": "../1/whitew.png",
+  "yellow shulker box": "../1/yellows.png",
+  "yellow wool": "../1/yelloww.png",
+  "wooden slab": "../1/wslab.png",
+  "stone stairs": "../1/stones.png",
+  "stone stairs left": "../1/stonesl.png",
+  "wooden stair": "../1/stair.png",
+  "stone slab": "../1/slab.png",
+  "bed bottem": "../1/bedb.png",
+  "bed pillow": "../1/bedp.png",
+  "door bottem": "../1/doorb.png",
+  "door top": "../1/doort.png",
+  "doors": "../1/doors.png",
+  "netheraite": "../1/netheraite.png",
+  "plank": "../1/plank.png",
+  "right stair": "../1/rstair.png",
+  "crafting table": "../1/ctable.png",
+  "furnace": "../1/furnace.png",
+  "smoker": "../1/smoker.png",
+  "blast furnace": "../1/bfurnace.png",
+  "anvil": "../1/anvil.png",
+  "enchantment table": "../1/etable.png",
+  "smithing table": "../1/stable.png",
+  "fletching table": "../1/ftable.png",
+  "cartography table": "../1/catable.png",
+  "loom": "../1/loom.png",
+  "end portal (filled)": "../1/endf.png",
+  "end portal (empty)": "../1/ende.png",
+  "end portal": "../1/endp.png",
+  "nether portal": "../1/np.png",
+  "cobblestone": "../1/cobble.png",
+  "chest": "../1/chest.png",
+  "emerald": "../1/emerald.png",
+  "gold ore nether": "1/goldn.png",
+  "netheraite block": "1/netheraiteb.png",
+  "emerald block": "../1/emeraldb.png",
+  "gold block": "../1/goldb.png",
+  "redstone block": "../1/redstoneb.png",
+  "copper block": "../1/copperb.png",
+  "diamond block": "../1/diamondb.png",
+  "iron block": "../1/ironb.png",
+  "coal block": "../1/coalb.png",
+  "smoke": "../1/smoke.png",
+  "piston 1": "../1/piston1.png",
+  "piston 2": "../1/piston2.png",
+  "piston 3": "../1/piston3.png",
+  "piston 4": "../1/piston4.png",
+  "redstone tourch": "../1/redstonet.png",
+  "top wood slab": "../1/slab1.png",
+  "top stone slab": "../1/slab2.png",
+  "lever off": "../1/leverf.png",
+  "lever on": "../1/leveron.png",
+  "lamp on": "../1/lamp1.png",
+  "lamp off": "../1/lamp2.png",
+  "redstone activated": "../1/redstonea.png",
+  "redstone decativated": "../1/redstoned.png",    
+  "redstone activated(floor)": "../1/redstonefa.png",
+  "redstone deactivated(floor)": "../1/redstonedf.png",
+  "observer": "../1/observer.png",
+  "hopper": "../1/hopper.png",
+  "dripstone (point)": "../1/dripstone.png",
+  "dribstone (block)": "../1/dripstoneb.png",
+  "target": "../1/target.png",
+  "soul campfire": "../1/blue.png",
+  "campfire": "../1/fire.png",
+  "bee hive": "../1/beehive.png",
+  "bee hive w/ honey": "../1/honey.png",
+  "grindstone": "../1/grindstone.png",
+  "soil": "../1/soil.png",
+  "beetroot": "../1/beetroot.png",
+  "carrot": "../1/carrot.png",
+  "sugarcane": "../1/cane.png",
+  "hay bale": "../1/hay.png",
+  "barrel": "../1/barrel.png",
+    };
+
+    const errorTexture = "../1/error.png"; // Fallback texture path
+    let currentBlockType = "Grass";
+    let showMenu = false;
+    let hoveredBlock = null;
+    let textures = {};
+    let filteredBlocks = Object.keys(blockTextures); // To store filtered blocks
+
+    // Function to load textures with error fallback
+    function loadTextures() {
+      const loadedTextures = {};
+      for (const type in blockTextures) {
+        const img = new Image();
+        img.src = blockTextures[type];
+        img.onerror = () => {
+          img.src = errorTexture; // Use fallback if texture is not found
+        };
+        loadedTextures[type] = img;
+      }
+      return loadedTextures;
+    }
+
+    textures = loadTextures();
+
+    // Function to generate natural dirt and grass layers
+    function generateNaturalTerrain() {
+      const rows = Math.floor(canvas.height / blockSize);
+      const cols = Math.floor(canvas.width / blockSize);
+
+      // Generate dirt layer
+      for (let x = 0; x < cols; x++) {
+        for (let y = rows - 1; y >= rows - 3; y--) { // 3 layers of dirt
+          world.push({ x: x * blockSize, y: y * blockSize, type: "Dirt" });
+        }
+      }
+
+      // Generate grass layer on top of dirt
+      for (let x = 0; x < cols; x++) {
+        world.push({ x: x * blockSize, y: (rows - 4) * blockSize, type: "Grass" });
+      }
+    }
+
+    // Function to draw the world and the menu
+    function drawWorld() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      world.forEach(block => {
+        if (textures[block.type]) {
+          ctx.drawImage(textures[block.type], block.x, block.y, blockSize, blockSize);
+        }
+      });
+    }
+
+    // Function to update the block menu
+    function updateMenu() {
+      menuItems.innerHTML = ""; // Clear existing menu items
+      filteredBlocks.forEach((block) => {
+        const menuItem = document.createElement("div");
+        menuItem.textContent = block;
+        menuItem.classList.add("menu-item");
+
+        if (block === currentBlockType) {
+          menuItem.classList.add("selected");
+        }
+
+        menuItem.addEventListener("click", () => {
+          currentBlockType = block;
+          toggleMenu(); // Hide menu after selecting a block
+        });
+
+        menuItems.appendChild(menuItem);
+      });
+    }
+
+    // Function to toggle the menu visibility
+    function toggleMenu() {
+      showMenu = !showMenu;
+      menuContainer.style.display = showMenu ? "block" : "none";
+      if (showMenu) {
+        updateMenu(); // Update menu items when shown
+      }
+    }
+
+    // Filter blocks based on search input
+    searchInput.addEventListener("input", (event) => {
+      const query = event.target.value.toLowerCase();
+      filteredBlocks = Object.keys(blockTextures).filter(block => block.toLowerCase().includes(query));
+      updateMenu(); // Update menu with filtered blocks
+    });
+
+    // Handle mouse click event (place or remove blocks)
+    function handleMouseClick(event) {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      if (showMenu) return; // Do nothing if menu is open
+
+      const gridX = Math.floor(mouseX / blockSize) * blockSize;
+      const gridY = Math.floor(mouseY / blockSize) * blockSize;
+
+      if (event.button === 0) {
+        // Left-click: Remove block
+        for (let i = 0; i < world.length; i++) {
+          if (gridX === world[i].x && gridY === world[i].y) {
+            world.splice(i, 1);
+            break;
+          }
+        }
+      } else if (event.button === 2) {
+        // Right-click: Place block
+        if (!world.some(block => block.x === gridX && block.y === gridY)) {
+          world.push({ x: gridX, y: gridY, type: currentBlockType });
+        }
+      }
+      drawWorld();
+    }
+
+    // Listen for keyboard input to toggle menu (C), load world (B), and save world (V)
+    document.addEventListener("keydown", (event) => {
+      if (event.key.toLowerCase() === "c") {
+        toggleMenu(); // Toggle menu visibility
+      }
+
+      if (event.key.toLowerCase() === "b") {
+        // Load world from JSON file
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+        input.onchange = (e) => {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            try {
+              const worldData = JSON.parse(event.target.result);
+              world.length = 0; // Clear the current world
+              world.push(...worldData);
+              drawWorld();
+            } catch (error) {
+              alert("Error loading world: " + error.message);
+            }
+          };
+          reader.readAsText(e.target.files[0]);
+        };
+        input.click();
+      }
+
+      if (event.key.toLowerCase() === "v") {
+        // Save world to JSON
+        const blob = new Blob([JSON.stringify(world)], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "world.json";
+        link.click();
+      }
+    });
+
+    // Initialize natural terrain
+    generateNaturalTerrain();
+    drawWorld();
+
+    canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+    canvas.addEventListener("mousedown", handleMouseClick);
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      generateNaturalTerrain(); // Regenerate terrain on resize
+      drawWorld();
+    });
+  </script>
+</body>
+</html>

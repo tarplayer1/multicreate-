@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multicreate Save/Load with Animals</title>
+  <style>
+    /* Your existing CSS styles */
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      background-color: #87CEEB;
+      transition: transform 0.5s ease-in-out; /* Smooth sliding effect */
+    }
+
+    .menu-container {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+      width: 200px;
+      height: 300px;
+      background-color: rgba(0, 0, 0, 0.8);
+      overflow-y: scroll;
+      padding: 10px;
+      border-radius: 5px;
+      display: none; /* Hide menu by default */
+    }
+
+    .menu-item {
+      color: white;
+      font-size: 20px;
+      padding: 10px;
+      cursor: pointer;
+    }
+
+    .menu-item:hover {
+      background-color: yellow;
+    }
+
+    .menu-item.selected {
+      background-color: blue;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .chunk-display {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 20px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+
+    .health-display {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: white;
+      font-size: 20px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border-radius: 5px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .animal-ui {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+  </style>
+              <link rel="icon" type="image/x-icon" href="../asset/grass.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="menuContainer" class="menu-container">
+    <input type="text" class="search-input" placeholder="Search..." />
+    <div id="menuItems"></div>
+  </div>
+  <div id="chunkDisplay" class="chunk-display">Chunk: 3</div>
+  <div id="healthDisplay" class="health-display"></div>
+
+  <script>
+    alert("Click the screen to start!");
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const menuContainer = document.getElementById("menuContainer");
+    const searchInput = document.querySelector(".search-input");
+    const menuItems = document.getElementById("menuItems");
+    const chunkDisplay = document.getElementById("chunkDisplay");
+    const healthDisplay = document.getElementById("healthDisplay");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const blockSize = 50;
+    const world = [];
+    const animals = []; // Array to store all animals
+    const fireballs = []; // Array to store fireballs
+    let isPaused = false; // Track whether mobs are paused
+    let zombiesAreFriendly = false; // Lever state for zombies (on/off)
+    const chunkSize = 10; // Number of blocks per chunk
+    const totalChunks = 10; // Total number of chunks
+    let currentChunk = 1; // Track the current chunk being displayed
+
+    // Cursor position
+    let cursorX = 0;
+    let cursorY = 0;
+
+    // CHUNK NAVIGATION: Store all chunks
+    const chunkData = Array.from({ length: totalChunks }, () => ({ blocks: [], animals: [] }));
+
+    // Function to save the current chunk's data
+    function saveCurrentChunk() {
+      chunkData[currentChunk - 1] = {
+        blocks: [...world],
+        animals: [...animals],
+      };
+    }
+
+    // Function to load a chunk's data
+    function loadChunk(chunkNumber) {
+      const chunk = chunkData[chunkNumber - 1];
+      world.length = 0; // Clear current blocks
+      animals.length = 0; // Clear current animals
+      world.push(...chunk.blocks); // Load blocks
+      animals.push(...chunk.animals); // Load animals
+      drawWorld(); // Redraw the world
+      chunkDisplay.textContent = `Chunk: ${chunkNumber}`; // Update chunk display
+    }
+
+    // Function to go to the next chunk
+    function goToNextChunk() {
+      saveCurrentChunk(); // Save the current chunk
+      currentChunk = currentChunk === totalChunks ? 1 : currentChunk + 1; // Loop back to 1 if at 10
+      loadChunk(currentChunk); // Load the next chunk
+    }
+
+    // Function to go to the previous chunk
+    function goToPreviousChunk() {
+      saveCurrentChunk(); // Save the current chunk
+      currentChunk = currentChunk === 1 ? totalChunks : currentChunk - 1; // Loop back to 10 if at 1
+      loadChunk(currentChunk); // Load the previous chunk
+    }
+
+    // Define block and spawn egg textures
+    const blockTextures = {
+      "Grass": "../asset/grass.png",
+      "Dirt": "../asset/dirt.png",
+      "Stone": "../asset/stone.png",
+      "Sand": "../asset/sand.png",
+      "Wood": "../asset/wood.png",
+      "Brick": "../asset/brick.png",
+      "Water": "../asset/water.png", // Water is now transparent
+      "Lava": "../asset/lava.png",
+      "Leaf": "../asset/leaves.png",
+      "netherack": "../asset/neth.png",
+      "beacon": "../asset/beacon.png",
+      "blue glass": "../asset/bglass.png",
+      "black shulker box": "../asset/blacks.png",
+      "black wool": "../asset/blackw.png",
+      "blue shulker box": "../asset/blues.png",
+      "blue wool": "../asset/bluew.png",
+      "coal ore": "../asset/coal.png",
+      "copper ore": "../asset/copper.png",
+      "crying obsidian": "../asset/cryo.png",
+      "diamond ore": "../asset/diamond.png",
+      "green glass": "../asset/gglass.png",
+      "glass": "../asset/glass.png",
+      "gold ore": "../asset/gold.png",
+      "gray shulker box": "../asset/grays.png",
+      "gray wool": "../asset/grayw.png",
+      "green shulker box": "../asset/greens.png",
+      "green wool": "../asset/greenw.png",
+      "iron ore": "../asset/iron.png",
+      "lapiz block": "../asset/lapiz.png",
+      "lightblue glass": "../asset/lbglass.png",
+      "light blue wool": "../asset/lightbw.png",
+      "magenta shulker box": "../asset/magentas.png",
+      "magenta wool": "../asset/magentaw.png",
+      "magenta glass": "../asset/mglass.png",
+      "obsidian": "../asset/obsidian.png",
+      "orange shulker box": "../asset/oranges.png",
+      "orange wool": "../asset/orangew.png",
+      "purple glass": "../asset/pglass.png",
+      "purple shulker box": "../asset/purples.png",
+      "purple wool": "../asset/purplew.png",
+      "quartz ore": "../asset/quart.png",
+      "red shulker box": "../asset/reds.png",
+      "redstone ore": "../asset/redstone.png",
+      "red wool": "../asset/redw.png",
+      "red glass": "../asset/rglass.png",
+      "slime block": "../asset/slime.png",
+      "TNT": "../asset/tnt.png",
+      "white shulker box": "../asset/whites.png",
+      "white wool": "../asset/whitew.png",
+      "yellow shulker box": "../asset/yellows.png",
+      "yellow wool": "../asset/yelloww.png",
+      "wooden slab": "../asset/wslab.png",
+      "stone stairs": "../asset/stones.png",
+      "stone stairs left": "../asset/stonesl.png",
+      "wooden stair": "../asset/stair.png",
+      "stone slab": "../asset/slab.png",
+      "bed bottem": "../asset/bedb.png",
+      "bed pillow": "../asset/bedp.png",
+      "door bottem": "../asset/doorb.png",
+      "door top": "../asset/doort.png",
+      "doors": "../asset/doors.png",
+      "netheraite": "../asset/netheraite.png",
+      "plank": "../asset/plank.png",
+      "right stair": "../asset/rstair.png",
+      "crafting table": "../asset/ctable.png",
+      "furnace": "../asset/furnace.png",
+      "smoker": "../asset/smoker.png",
+      "blast furnace": "../asset/bfurnace.png",
+      "anvil": "../asset/anvil.png",
+      "enchantment table": "../asset/etable.png",
+      "smithing table": "../asset/stable.png",
+      "fletching table": "../asset/ftable.png",
+      "cartography table": "../asset/catable.png",
+      "loom": "../asset/loom.png",
+      "end portal (filled)": "../asset/endf.png",
+      "end portal (empty)": "../asset/ende.png",
+      "end portal": "../asset/endp.png",
+      "nether portal": "../asset/np.png",
+      "cobblestone": "../asset/cobble.png",
+      "chest": "../asset/chest.png",
+      "emerald": "../asset/emerald.png",
+      "gold ore nether": "../asset/goldn.png",
+      "netheraite block": "../asset/netheraiteb.png",
+      "emerald block": "../asset/emeraldb.png",
+      "gold block": "../asset/goldb.png",
+      "redstone block": "../asset/redstoneb.png",
+      "copper block": "../asset/copperb.png",
+      "diamond block": "../asset/diamondb.png",
+      "iron block": "../asset/ironb.png",
+      "coal block": "../asset/coalb.png",
+      "smoke": "../asset/smoke.png",
+      "piston 1": "../asset/piston1.png",
+      "piston 2": "../asset/piston2.png",
+      "piston 3": "../asset/piston3.png",
+      "piston 4": "../asset/piston4.png",
+      "redstone tourch": "../asset/redstonet.png",
+      "top wood slab": "../asset/slab1.png",
+      "top stone slab": "../asset/slab2.png",
+      "lever off": "../asset/leverf.png",
+      "lever on": "../asset/leveron.png",
+      "lamp on": "../asset/lamp1.png",
+      "lamp off": "../asset/lamp2.png",
+      "redstone activated": "../asset/redstonea.png",
+      "redstone decativated": "../asset/redstoned.png",    
+      "redstone activated(floor)": "../asset/redstonefa.png",
+      "redstone deactivated(floor)": "../asset/redstonedf.png",
+      "observer": "../asset/observer.png",
+      "hopper": "../asset/hopper.png",
+      "dripstone (point)": "../asset/dripstone.png",
+      "dribstone (block)": "../asset/dripstoneb.png",
+      "target": "../asset/target.png",
+      "soul campfire": "../asset/blue.png",
+      "campfire": "../asset/fire.png",
+      "bee hive": "../asset/beehive.png",
+      "bee hive w/ honey": "../asset/honey.png",
+      "grindstone": "../asset/grindstone.png",
+      "soil": "../asset/soil.png",
+      "beetroot": "../asset/beetroot.png",
+      "carrot": "../asset/carrot.png",
+      "sugarcane": "../asset/cane.png",
+      "hay bale": "../asset/hay.png",
+      "barrel": "../asset/barrel.png",
+      "Infect": "../asset/infect.png", // New Infect block
+      "Cure": "../asset/cure.png", // New Cure block
+      "Frog": "../asset/infect.png", // New Infect block
+      "Flower": "../asset/flower.png", // New Flower block
+    };
+
+    const spawnEggTextures = {
+      "Frog Spawn Egg": "../asset/frog_egg.png",
+      "Cow Spawn Egg": "../asset/cow_egg.png",
+      "Chicken Spawn Egg": "../asset/chicken_egg.png",
+      "Chick Spawn Egg": "../asset/chick_egg.png",
+      "Duck Spawn Egg": "../asset/duck_egg.png",
+      "Bob Spawn Egg": "../asset/bob_egg.png",
+      "Lilly Spawn Egg": "../asset/lilly_egg.png",
+      "Zombie Spawn Egg": "../asset/zombie_egg.png",
+      "Baby Spawn Egg": "../asset/baby_egg.png",
+      "Child Spawn Egg": "../asset/child_egg.png",
+      "Bee Spawn Egg": "../asset/bee_egg.png", // New Bee Spawn Egg
+      "Ghast Spawn Egg": "../asset/ghast_egg.png", // New Bee Spawn Egg
+    };
+
+    const errorTexture = "../asset/er.png"; // Fallback texture path
+    const deathTexture = "../asset/death.png"; // Death texture path
+    let currentBlockType = "Grass";
+    let showMenu = false;
+    let textures = {};
+    let filteredItems = Object.keys(blockTextures); // To store filtered items
+    let currentMenuType = "blocks"; // Tracks whether the menu is for blocks or spawn eggs
+
+    const animalProperties = {
+      "Frog": {
+        textureName: "frog",
+        speed: 2,
+      },
+      "Cow": {
+        textureName: "cow",
+        speed: 1,
+      },
+      "Chicken": {
+        textureName: "chicken",
+        speed: 1.5,
+      },
+      "Duck": {
+        textureName: "duck",
+        speed: 1.8,
+      },
+      "Chick": {
+        textureName: "chick",
+        speed: 1.8,
+      },
+      "Bob": {
+        textureName: "bob",
+        speed: 2,
+        hunger: 10,
+        health: 10,
+      },
+      "Lilly": {
+        textureName: "lilly",
+        speed: 2,
+        hunger: 10,
+        health: 10,
+      },
+      "Zombie": {
+        textureName: "zombie",
+        speed: 2,
+      },
+      "Baby": {
+        textureName: "baby",
+        speed: 0, // Babies cannot move
+      },
+      "Child": {
+        textureName: "child",
+        speed: 1.5, // Children can move
+      },
+      "Bee": {
+        textureName: "bee",
+        speed: 2,
+        canFly: true, // Bees can fly
+      },
+      "Ghast": {
+        textureName: "ghast",
+        speed: 2,
+        canFly: true, // Ghasts can fly
+      },
+    };
+
+    // Fireball class
+    class Fireball {
+      constructor(x, y, targetX, targetY) {
+        this.x = x;
+        this.y = y;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.speed = 5;
+        this.width = 20;
+        this.height = 20;
+        this.texture = new Image();
+        this.texture.src = "../asset/fireball.png";
+        this.damage = 5; // Fireballs deal 5 damage
+      }
+
+      update() {
+        // Move toward the target
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > 0) {
+          this.x += (dx / distance) * this.speed;
+          this.y += (dy / distance) * this.speed;
+        }
+
+        // Check if the fireball hits the target
+        if (distance < 10) {
+          this.explode();
+          this.remove();
+        }
+      }
+
+      draw() {
+        ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+      }
+
+      explode() {
+        // Damage animals in a 5-block radius
+        animals.forEach(animal => {
+          const dx = animal.x - this.x;
+          const dy = animal.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < 5 * blockSize) {
+            animal.health -= this.damage;
+            if (animal.health <= 0) {
+              animal.isDead = true;
+            }
+          }
+        });
+      }
+
+      remove() {
+        const index = fireballs.indexOf(this);
+        if (index !== -1) {
+          fireballs.splice(index, 1);
+        }
+      }
+    }
+
+    // Animal class
+    class Animal {
+      constructor(x, y, textureName, speed) {
+        this.x = x;
+        this.y = y;
+        this.width = blockSize;
+        this.height = blockSize;
+        this.speed = speed;
+        this.gravity = textureName === "bee" || textureName === "ghast" ? 0 : 1; // Bees and Ghasts don't have gravity
+        this.velocityY = 0;
+        this.isOnGround = false;
+        this.direction = 1; // 1 for right, -1 for left
+        this.isTrapped = false;
+        this.isZombie = textureName === "zombie"; // Track if the animal is a zombie
+        this.eatCooldown = 0; // Cooldown for eating animals
+        this.jumpHeight = textureName === "frog" ? Infinity : 2 * blockSize; // Frogs can jump any height, others are restricted
+        this.originalType = textureName; // Store the original type for curing
+        this.isFrog = textureName === "frog"; // Track if the animal is a frog
+        this.bounceCooldown = 0; // Cooldown for frog bouncing
+        this.isBaby = textureName === "baby"; // Track if the animal is a baby
+        this.isChild = textureName === "child"; // Track if the animal is a child
+        this.growthTimer = 0; // Timer for growing into a child or adult
+        this.isDead = false; // Track if the animal is dead
+        this.underwaterTimer = 0; // Timer for being underwater
+        this.isInLove = false; // Track if the animal is in love mode
+        this.canFly = textureName === "bee" || textureName === "ghast"; // Bees and Ghasts can fly
+        this.hasPollen = false; // Track if the bee has pollen
+        this.targetHive = null; // Track the hive the bee is targeting
+        this.targetFlower = null; // Track the flower the bee is targeting
+        this.fireCooldown = 0; // Cooldown for Ghast fireballs
+        this.hunger = animalProperties[textureName]?.hunger || 0; // Hunger stat
+        this.health = animalProperties[textureName]?.health || 10; // Health stat
+
+        // 10% chance for the frog to have a crown
+        this.hasCrown = textureName === "frog" && Math.random() < 0.1;
+
+        // If the frog has a crown, use the crown texture instead of the frog texture
+        if (this.hasCrown) {
+          textureName = "crown"; // Use the combined crown-wearing frog texture
+        }
+
+        // Load textures
+        this.rightTexture = new Image();
+        this.rightTexture.src = `../asset/${textureName}.png`;
+        this.rightTexture.onerror = () => {
+          this.rightTexture.src = errorTexture;
+        };
+
+        this.leftTexture = new Image();
+        this.leftTexture.src = `../asset/left${textureName}.png`;
+        this.leftTexture.onerror = () => {
+          this.leftTexture.src = errorTexture;
+        };
+
+        this.trappedTexture = new Image();
+        this.trappedTexture.src = `../asset/trap${textureName}.png`;
+        this.trappedTexture.onerror = () => {
+          this.trappedTexture.src = errorTexture;
+        };
+
+        this.deathTexture = new Image();
+        this.deathTexture.src = deathTexture;
+        this.deathTexture.onerror = () => {
+          this.deathTexture.src = errorTexture;
+        };
+
+        this.currentTexture = this.leftTexture;
+      }
+
+      // Check if the animal is surrounded by blocks
+      isSurrounded() {
+        const gridX = Math.floor(this.x / blockSize);
+        const gridY = Math.floor(this.y / blockSize);
+
+        const hasBlockAbove = world.some(block => block.x === gridX * blockSize && block.y === (gridY - 1) * blockSize);
+        const hasBlockBelow = world.some(block => block.x === gridX * blockSize && block.y === (gridY + 1) * blockSize);
+        const hasBlockLeft = world.some(block => block.x === (gridX - 1) * blockSize && block.y === gridY * blockSize);
+        const hasBlockRight = world.some(block => block.x === (gridX + 1) * blockSize && block.y === gridY * blockSize);
+
+        return hasBlockAbove && hasBlockBelow && hasBlockLeft && hasBlockRight;
+      }
+
+      // Detect and eat animals (only for Bob and Lilly when health is low)
+      detectAndEatAnimals() {
+        if (this.eatCooldown > 0 || !(this.textureName === "bob" || this.textureName === "lilly") || this.health >= 5) {
+          this.eatCooldown--; // Reduce cooldown
+          return;
+        }
+
+        const detectionRange = 50; // Range within which Bob/Lilly can detect animals
+        for (let i = 0; i < animals.length; i++) {
+          const animal = animals[i];
+          if (
+            animal === this || // Skip itself
+            animal.isZombie // Skip zombies
+          ) continue;
+
+          // Calculate distance between Bob/Lilly and animal
+          const dx = animal.x - this.x;
+          const dy = animal.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < detectionRange) {
+            // Eat the animal
+            animals.splice(i, 1); // Remove the animal
+            this.health = Math.min(this.health + 2, 10); // Increase health
+            this.eatCooldown = 300; // 5 seconds at 60 FPS
+            break; // Stop after eating one animal
+          }
+        }
+      }
+
+      // Check for walls taller than 2 blocks
+      checkForWall() {
+        const gridX = Math.floor(this.x / blockSize);
+        const gridY = Math.floor(this.y / blockSize);
+
+        // Check for a wall in the direction the animal is moving
+        const nextX = gridX + this.direction;
+        const nextY = gridY;
+
+        // Check if there is a block at the next position
+        const hasBlock = world.some(block => block.x === nextX * blockSize && block.y === nextY * blockSize);
+
+        // Check if there is a block 2 blocks high in front of the animal
+        const hasTallWall = world.some(block => block.x === nextX * blockSize && block.y === (nextY - 1) * blockSize);
+
+        return hasBlock || hasTallWall;
+      }
+
+      // Update the animal's state
+      update() {
+        if (isPaused || this.isDead) return;
+
+        // Check if the mob is surrounded by blocks
+        if (this.isSurrounded()) {
+          this.isTrapped = true;
+          this.currentTexture = this.trappedTexture;
+          return;
+        } else {
+          this.isTrapped = false;
+        }
+
+        // Apply gravity (only if the animal cannot fly)
+        if (!this.canFly && !this.isOnGround) {
+          this.velocityY += this.gravity;
+          this.y += this.velocityY;
+        }
+
+        // Check for collisions with blocks (only if the animal cannot fly)
+        if (!this.canFly) {
+          this.isOnGround = false;
+          for (const block of world) {
+            if (
+              this.x < block.x + blockSize &&
+              this.x + this.width > block.x &&
+              this.y + this.height >= block.y &&
+              this.y + this.height <= block.y + blockSize
+            ) {
+              // Land on the block
+              this.y = block.y - this.height;
+              this.velocityY = 0;
+              this.isOnGround = true;
+
+              // Check for Infect or Cure blocks
+              if (block.type === "Infect") {
+                this.isZombie = true;
+                this.textureName = "zombie";
+                this.rightTexture.src = `../asset/zombie.png`;
+                this.leftTexture.src = `../asset/leftzombie.png`;
+                this.trappedTexture.src = `../asset/trapzombie.png`;
+              } else if (block.type === "Cure") {
+                const nonZombieTypes = Object.keys(animalProperties).filter(type => type !== "Zombie");
+                const randomType = nonZombieTypes[Math.floor(Math.random() * nonZombieTypes.length)];
+                this.isZombie = false;
+                this.textureName = animalProperties[randomType].textureName;
+                this.rightTexture.src = `../asset/${this.textureName}.png`;
+                this.leftTexture.src = `../asset/left${this.textureName}.png`;
+                this.trappedTexture.src = `../asset/trap${this.textureName}.png`;
+              } else if (block.type === "Frog") {
+                this.textureName = "frog";
+                this.rightTexture.src = `../asset/frog.png`;
+                this.leftTexture.src = `../asset/leftfrog.png`;
+                this.trappedTexture.src = `../asset/trapfrog.png`;
+              }
+
+              // Check for Lava
+              if (block.type === "Lava") {
+                this.health -= 5; // Lava deals 5 damage per second
+                if (this.health <= 0) {
+                  this.isDead = true;
+                  this.currentTexture = this.deathTexture;
+                  return;
+                }
+              }
+
+              // Check for Water
+              if (block.type === "Water") {
+                this.underwaterTimer++;
+                if (this.underwaterTimer >= 600) { // 10 seconds at 60 FPS
+                  this.isDead = true;
+                  this.currentTexture = this.deathTexture;
+                  return;
+                }
+              } else {
+                this.underwaterTimer = 0; // Reset underwater timer if not in water
+              }
+            }
+          }
+        }
+
+        // Babies cannot move
+        if (this.isBaby) {
+          return;
+        }
+
+        // Check for walls taller than 2 blocks (only if the animal cannot fly)
+        if (!this.canFly && this.checkForWall() && !this.isFrog) {
+          this.direction *= -1; // Turn around
+        }
+
+        // Move horizontally
+        this.x += this.speed * this.direction;
+
+        // Update texture based on direction
+        if (this.direction === 1) {
+          this.currentTexture = this.leftTexture;
+        } else {
+          this.currentTexture = this.rightTexture;
+        }
+
+        // Reverse direction if hitting the edge of the canvas or a block
+        if (this.x < 0 || this.x + this.width > canvas.width) {
+          this.direction *= -1;
+        }
+
+        // Detect and eat animals (only for Bob and Lilly when health is low)
+        if (this.textureName === "bob" || this.textureName === "lilly") {
+          this.detectAndEatAnimals();
+        }
+
+        // Randomly bounce frogs
+        if (this.isFrog && this.isOnGround && Math.random() < 0.01) {
+          this.velocityY = -10; // Jump
+        }
+
+        // Grow baby into child and child into adult
+        if (this.isBaby || this.isChild) {
+          this.growthTimer++;
+          if (this.isBaby && this.growthTimer >= 3600) { // 1 minute at 60 FPS
+            this.textureName = "child";
+            this.isBaby = false;
+            this.isChild = true;
+            this.growthTimer = 0;
+            this.rightTexture.src = `../asset/child.png`;
+            this.leftTexture.src = `../asset/leftchild.png`;
+            this.trappedTexture.src = `../asset/trapchild.png`;
+          } else if (this.isChild && this.growthTimer >= 3600) { // 1 minute at 60 FPS
+            const newType = Math.random() < 0.5 ? "Bob" : "Lilly";
+            this.textureName = newType.toLowerCase();
+            this.isChild = false;
+            this.growthTimer = 0;
+            this.rightTexture.src = `../asset/${this.textureName}.png`;
+            this.leftTexture.src = `../asset/left${this.textureName}.png`;
+            this.trappedTexture.src = `../asset/trap${this.textureName}.png`;
+          }
+        }
+
+        // Ghast behavior: Shoot fireballs every 10 seconds
+        if (this.textureName === "ghast" && this.fireCooldown <= 0) {
+          const target = animals.find(animal => animal.textureName === "bob" || animal.textureName === "lilly");
+          if (target) {
+            const dx = target.x - this.x;
+            const dy = target.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 300) { // Ghast can see within 300 pixels
+              fireballs.push(new Fireball(this.x, this.y, target.x, target.y));
+              this.fireCooldown = 600; // 10 seconds at 60 FPS
+            }
+          }
+        } else {
+          this.fireCooldown--;
+        }
+      }
+
+      // Draw the animal on the canvas
+      draw() {
+        if (this.currentTexture.complete) {
+          ctx.drawImage(this.currentTexture, this.x, this.y, this.width, this.height);
+        }
+      }
+    }
+
+    // Function to load textures with error fallback
+    function loadTextures() {
+      const loadedTextures = {};
+      for (const type in blockTextures) {
+        const img = new Image();
+        img.src = blockTextures[type];
+        img.onerror = () => {
+          img.src = errorTexture;
+        };
+        loadedTextures[type] = img;
+      }
+      for (const type in spawnEggTextures) {
+        const img = new Image();
+        img.src = spawnEggTextures[type];
+        img.onerror = () => {
+          img.src = errorTexture;
+        };
+        loadedTextures[type] = img;
+      }
+      return loadedTextures;
+    }
+
+    textures = loadTextures();
+
+    // Function to generate flat terrain with stone under dirt and grass
+    function generateFlatTerrain() {
+      world.length = 0; // Clear the existing world
+      const rows = Math.floor(canvas.height / blockSize);
+      const cols = Math.floor(canvas.width / blockSize);
+
+      // Generate terrain layers
+      for (let x = 0; x < cols; x++) {
+        for (let y = rows - 1; y >= rows - 5; y--) { // 5 layers total
+          if (y === rows - 1) {
+            // Top layer: Grass
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Grass" });
+          } else if (y === rows - 2 || y === rows - 3) {
+            // Next two layers: Dirt
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Dirt" });
+          } else if (y === rows - 4 || y === rows - 5) {
+            // Bottom two layers: Stone
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Stone" });
+          }
+        }
+      }
+
+      // Randomly spawn trees
+      for (let x = 0; x < cols; x++) {
+        if (Math.random() < 0.1) { // 10% chance to spawn a tree
+          spawnTree(x * blockSize, (rows - 5) * blockSize);
+        }
+      }
+
+      // Randomly spawn 1-5 animals
+      const animalTypes = Object.keys(animalProperties);
+      const numAnimals = Math.floor(Math.random() * 5) + 1; // Random number between 1 and 5
+      for (let i = 0; i < numAnimals; i++) {
+        const randomType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+        const x = Math.floor(Math.random() * cols) * blockSize;
+        const y = (rows - 5) * blockSize; // Spawn on the grass layer
+        animals.push(new Animal(x, y, animalProperties[randomType].textureName, animalProperties[randomType].speed));
+      }
+    }
+
+    // Function to spawn a tree
+    function spawnTree(x, y) {
+      const trunkHeight = 3; // Height of the tree trunk
+      const foliageWidth = 3; // Width of the foliage
+
+      // Spawn trunk
+      for (let i = 0; i < trunkHeight; i++) {
+        world.push({ x: x, y: y - i * blockSize, type: "Wood" });
+      }
+
+      // Spawn foliage
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          if (i !== 0 || j !== 0) { // Skip the center block (trunk)
+            world.push({ x: x + i * blockSize, y: y - trunkHeight * blockSize + j * blockSize, type: "Leaf" });
+          }
+        }
+      }
+    }
+
+    // Function to load chunks with animation
+    function loadChunks() {
+      const cols = Math.floor(canvas.width / blockSize);
+      const rows = Math.floor(canvas.height / blockSize);
+
+      if (currentChunk * chunkSize >= cols) {
+        // All chunks loaded
+        return;
+      }
+
+      // Load the next chunk
+      for (let x = currentChunk * chunkSize; x < (currentChunk + 1) * chunkSize; x++) {
+        if (x >= cols) break; // Stop if we reach the end of the canvas
+
+        // Ensure at least 1 layer of dirt in every chunk
+        for (let y = rows - 1; y >= rows - 5; y--) { // Generate terrain for this chunk
+          if (y === rows - 1) {
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Grass" });
+          } else if (y === rows - 2 || y === rows - 3) {
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Dirt" });
+          } else if (y === rows - 4 || y === rows - 5) {
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Stone" });
+          }
+        }
+
+        // Randomly spawn trees in this chunk
+        if (Math.random() < 0.1) { // 10% chance to spawn a tree
+          spawnTree(x * blockSize, (rows - 5) * blockSize);
+        }
+      }
+
+      currentChunk++;
+      setTimeout(loadChunks, 100); // Load the next chunk after a delay
+    }
+
+    // Function to draw the world and animals
+    function drawWorld() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      world.forEach(block => {
+        if (textures[block.type]) {
+          ctx.drawImage(textures[block.type], block.x, block.y, blockSize, blockSize);
+        }
+      });
+
+      // Draw animals
+      animals.forEach(animal => {
+        animal.draw();
+      });
+
+      // Draw fireballs
+      fireballs.forEach(fireball => {
+        fireball.update();
+        fireball.draw();
+      });
+
+      // Draw cursor
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cursorX, cursorY, blockSize, blockSize);
+    }
+
+    // Move cursor
+    function moveCursor(dx, dy) {
+      cursorX = Math.max(0, Math.min(canvas.width - blockSize, cursorX + dx * blockSize));
+      cursorY = Math.max(0, Math.min(canvas.height - blockSize, cursorY + dy * blockSize));
+    }
+
+    // Function to update the menu
+    function updateMenu() {
+      menuItems.innerHTML = ""; // Clear existing menu items
+      filteredItems.forEach((item) => {
+        const menuItem = document.createElement("div");
+        menuItem.textContent = item;
+        menuItem.classList.add("menu-item");
+
+        if (item === currentBlockType) {
+          menuItem.classList.add("selected");
+        }
+
+        menuItem.addEventListener("click", () => {
+          currentBlockType = item;
+          toggleMenu(); // Hide menu after selecting an item
+        });
+
+        menuItems.appendChild(menuItem);
+      });
+    }
+
+    // Function to toggle the menu visibility
+    function toggleMenu() {
+      showMenu = !showMenu;
+      menuContainer.style.display = showMenu ? "block" : "none";
+      if (showMenu) {
+        updateMenu(); // Update menu items when shown
+      }
+    }
+
+    // Handle keydown events
+    document.addEventListener("keydown", (event) => {
+      switch (event.key) {
+        case "ArrowUp":
+          moveCursor(0, -1);
+          break;
+        case "ArrowDown":
+          moveCursor(0, 1);
+          break;
+        case "ArrowLeft":
+          moveCursor(-1, 0);
+          break;
+        case "ArrowRight":
+          moveCursor(1, 0);
+          break;
+        case "Enter": // Right-click (place block/spawn animal)
+          if (currentBlockType.endsWith(" Spawn Egg")) {
+            const animalName = currentBlockType.replace(" Spawn Egg", "");
+            if (animalProperties[animalName]) {
+              animals.push(new Animal(cursorX, cursorY, animalProperties[animalName].textureName, animalProperties[animalName].speed));
+            }
+          } else if (!world.some(block => block.x === cursorX && block.y === cursorY)) {
+            world.push({ x: cursorX, y: cursorY, type: currentBlockType });
+          }
+          break;
+        case "Backspace": // Left-click (remove block/animal)
+          for (let i = 0; i < world.length; i++) {
+            if (cursorX === world[i].x && cursorY === world[i].y) {
+              world.splice(i, 1);
+              break;
+            }
+          }
+          for (let i = 0; i < animals.length; i++) {
+            const animal = animals[i];
+            if (
+              cursorX >= animal.x &&
+              cursorX <= animal.x + animal.width &&
+              cursorY >= animal.y &&
+              cursorY <= animal.y + animal.height
+            ) {
+              animals.splice(i, 1);
+              break;
+            }
+          }
+          break;
+        case "Shift": // Middle-click (special interactions)
+          // Example: Explode TNT
+          for (let i = 0; i < world.length; i++) {
+            const block = world[i];
+            if (block.x === cursorX && block.y === cursorY && block.type === "TNT") {
+              explodeTNT(block.x, block.y);
+              world.splice(i, 1); // Remove the TNT block
+              break;
+            }
+          }
+          break;
+        case "c": // Open blocks menu
+          currentMenuType = "blocks";
+          filteredItems = Object.keys(blockTextures);
+          toggleMenu();
+          break;
+        case "s": // Open spawn eggs menu
+          currentMenuType = "spawnEggs";
+          filteredItems = Object.keys(spawnEggTextures);
+          toggleMenu();
+          break;
+        case "1": // Go to previous chunk
+          goToPreviousChunk();
+          break;
+        case "2": // Go to next chunk
+          goToNextChunk();
+          break;
+        case " ": // Spacebar: Pause/unpause
+          isPaused = !isPaused;
+          break;
+        case "v": // Save world
+          const jsonData = JSON.stringify(chunkData);
+          const blob = new Blob([jsonData], { type: "application/json" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "world.json";
+          link.click();
+          break;
+        case "b": // Load world
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = ".json";
+          input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+              const jsonData = JSON.parse(event.target.result);
+              chunkData.length = 0; // Clear existing chunk data
+              chunkData.push(...jsonData); // Load new chunk data
+              alert("World loaded successfully!");
+              loadChunk(currentChunk); // Load the current chunk after loading the world
+            };
+            reader.readAsText(file);
+          };
+          input.click();
+          break;
+        case "5": // Toggle zombie friendliness
+          zombiesAreFriendly = !zombiesAreFriendly;
+          alert(`Zombies are now ${zombiesAreFriendly ? "friendly (Bob/Lilly)" : "normal"}`);
+          break;
+      }
+      drawWorld();
+    });
+
+    // Initialize flat terrain
+    generateFlatTerrain();
+    drawWorld();
+
+    // Game loop
+    function gameLoop() {
+      if (!isPaused) {
+        animals.forEach(animal => animal.update()); // Update animals only if not paused
+      }
+      drawWorld();
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>

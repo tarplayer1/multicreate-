@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ultimate Multicreate with Enhanced Mobs & Physics</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+      background-color: #87CEEB;
+    }
+    .menu-container {
+      position: absolute;
+      top: 50px;
+      left: 50px;
+      width: 200px;
+      height: 300px;
+      background-color: rgba(0, 0, 0, 0.8);
+      overflow-y: scroll;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    .menu-item {
+      color: white;
+      font-size: 20px;
+      padding: 10px;
+      cursor: pointer;
+    }
+    .menu-item:hover {
+      background-color: yellow;
+    }
+    .menu-item.selected {
+      background-color: blue;
+    }
+    .search-input {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      background-color: #333;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    .chunk-display {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 20px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border-radius: 5px;
+    }
+    .health-display {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      color: white;
+      font-size: 20px;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border-radius: 5px;
+      display: flex;
+      gap: 10px;
+    }
+    .animal-ui {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    #fullscreenButton {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      z-index: 100;
+      padding: 8px 16px;
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+    }
+    #fullscreenButton:hover {
+      background-color: rgba(0, 0, 0, 0.9);
+    }
+    .infection-effect {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: rgba(255, 0, 0, 0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: infectPulse 1s forwards;
+    }
+    @keyframes infectPulse {
+      0% { transform: scale(0.5); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+  </style>
+              <link rel="icon" type="image/x-icon" href="../asset/grass.png">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="menuContainer" class="menu-container">
+    <input type="text" class="search-input" placeholder="Search..." />
+    <div id="menuItems"></div>
+  </div>
+  <div id="chunkDisplay" class="chunk-display">Chunk: 1</div>
+  <div id="healthDisplay" class="health-display"></div>
+  <input type="file" id="texturePackInput" accept=".zip" style="display: none;" />
+  <button id="fullscreenButton" title="Toggle Fullscreen (F11)">⛶ Fullscreen</button>
+
+  <script>
+    alert("Click the screen to start!");
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const menuContainer = document.getElementById("menuContainer");
+    const searchInput = document.querySelector(".search-input");
+    const menuItems = document.getElementById("menuItems");
+    const chunkDisplay = document.getElementById("chunkDisplay");
+    const healthDisplay = document.getElementById("healthDisplay");
+    const fullscreenButton = document.getElementById("fullscreenButton");
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const blockSize = 50;
+    const world = [];
+    const animals = [];
+    const fireballs = [];
+    const witherSkulls = [];
+    const effects = [];
+    let isPaused = false;
+    let zombiesAreFriendly = false;
+    const chunkSize = 10;
+    const totalChunks = 10;
+    let currentChunk = 1;
+
+    const chunkData = Array.from({ length: totalChunks }, () => ({ blocks: [], animals: [] }));
+
+    // Physics properties
+    const physicsBlocks = {
+      "Sand": { falls: true, fluid: false, spread: 0, viscosity: 1 },
+      "Gravel": { falls: true, fluid: false, spread: 0, viscosity: 1 },
+      "Water": { 
+        falls: true, 
+        fluid: true, 
+        flowSpeed: 5,
+        maxLevel: 8,
+        spread: 5,
+        viscosity: 1
+      },
+      "Lava": { 
+        falls: true, 
+        fluid: true, 
+        flowSpeed: 2,
+        maxLevel: 8,
+        spread: 3,
+        viscosity: 3
+      }
+    };
+    let lastPhysicsUpdate = 0;
+    const PHYSICS_UPDATE_INTERVAL = 100;
+
+    // Faction system
+    const FACTION = {
+      HOSTILE: "hostile",
+      PEACEFUL: "peaceful",
+      HUMAN: "human",
+      NEUTRAL: "neutral"
+    };
+
+    // Block textures
+    const blockTextures = {
+      "Grass": "../2/grass.png",
+      "Dirt": "../2/dirt.png",
+      "Stone": "../2/stone.png",
+      "Sand": "../2/sand.png",
+      "Gravel": "../2/gravel.png",
+      "Wood": "../2/wood.png",
+      "Brick": "../2/brick.png",
+      "Water": "../2/water.png",
+      "Lava": "../2/lava.png",
+      "Leaf": "../2/leaves.png",
+      "netherack": "../2/neth.png",
+      "beacon": "../2/beacon.png",
+      "blue glass": "../2/bglass.png",
+      "black shulker box": "../2/blacks.png",
+      "black wool": "../2/blackw.png",
+      "blue shulker box": "../2/blues.png",
+      "blue wool": "../2/bluew.png",
+      "coal ore": "../2/coal.png",
+      "copper ore": "../2/copper.png",
+      "crying obsidian": "../2/cryo.png",
+      "diamond ore": "../2/diamond.png",
+      "green glass": "../2/gglass.png",
+      "glass": "../2/glass.png",
+      "gold ore": "../2/gold.png",
+      "gray shulker box": "../2/grays.png",
+      "gray wool": "../2/grayw.png",
+      "green shulker box": "../2/greens.png",
+      "green wool": "../2/greenw.png",
+      "iron ore": "../2/iron.png",
+      "lapiz block": "../2/lapizb.png",
+      "lightblue glass": "../2/lbglass.png",
+      "light blue wool": "../2/lightbw.png",
+      "magenta shulker box": "../2/magentas.png",
+      "magenta wool": "../2/magentaw.png",
+      "magenta glass": "../2/mglass.png",
+      "obsidian": "../2/obsidian.png",
+      "orange shulker box": "../2/oranges.png",
+      "orange wool": "../2/orangew.png",
+      "purple glass": "../2/pglass.png",
+      "purple shulker box": "../2/purples.png",
+      "purple wool": "../2/purplew.png",
+      "quartz ore": "../2/quart.png",
+      "red shulker box": "../2/reds.png",
+      "redstone ore": "../2/redstone.png",
+      "red wool": "../2/redw.png",
+      "red glass": "../2/rglass.png",
+      "slime block": "../2/slime.png",
+      "TNT": "../2/tnt.png",
+      "white shulker box": "../2/whites.png",
+      "white wool": "../2/whitew.png",
+      "yellow shulker box": "../2/yellows.png",
+      "yellow wool": "../2/yelloww.png",
+      "wooden slab": "../2/wslab.png",
+      "stone stairs": "../2/stones.png",
+      "stone stairs left": "../2/stonesl.png",
+      "wooden stair": "../2/stair.png",
+      "stone slab": "../2/slab.png",
+      "bed bottem": "../2/bedb.png",
+      "bed pillow": "../2/bedp.png",
+      "door bottem": "../2/doorb.png",
+      "door top": "../2/doort.png",
+      "doors": "../2/doors.png",
+      "netheraite": "../2/netheraite.png",
+      "plank": "../2/plank.png",
+      "right stair": "../2/rstair.png",
+      "crafting table": "../2/ctable.png",
+      "furnace": "../2/furnace.png",
+      "smoker": "../2/smoker.png",
+      "blast furnace": "../2/bfurnace.png",
+      "anvil": "../2/anvil.png",
+      "enchantment table": "../2/etable.png",
+      "smithing table": "../2/stable.png",
+      "fletching table": "../2/ftable.png",
+      "cartography table": "../2/catable.png",
+      "loom": "../2/loom.png",
+      "end portal (filled)": "../2/endf.png",
+      "end portal (empty)": "../2/ende.png",
+      "end portal": "../2/endp.png",
+      "nether portal": "../2/np.png",
+      "cobblestone": "../2/cobble.png",
+      "chest": "../2/chest.png",
+      "emerald": "../2/emerald.png",
+      "gold ore nether": "../2/goldn.png",
+      "netheraite block": "../2/netheraiteb.png",
+      "emerald block": "../2/emeraldb.png",
+      "gold block": "../2/goldb.png",
+      "redstone block": "../2/redstoneb.png",
+      "copper block": "../2/copperb.png",
+      "diamond block": "../2/diamondb.png",
+      "iron block": "../2/ironb.png",
+      "coal block": "../2/coalb.png",
+      "smoke": "../2/smoke.png",
+      "piston 1": "../2/piston1.png",
+      "piston 2": "../2/piston2.png",
+      "piston 3": "../2/piston3.png",
+      "piston 4": "../2/piston4.png",
+      "redstone tourch": "../2/redstonet.png",
+      "top wood slab": "../2/slab1.png",
+      "top stone slab": "../2/slab2.png",
+      "lever off": "../2/leverf.png",
+      "lever on": "../2/leveron.png",
+      "lamp on": "../2/lamp1.png",
+      "lamp off": "../2/lamp2.png",
+      "redstone activated": "../2/redstonea.png",
+      "redstone decativated": "../2/redstoned.png",    
+      "redstone activated(floor)": "../2/redstonefa.png",
+      "redstone deactivated(floor)": "../2/redstonedf.png",
+      "observer": "../2/observer.png",
+      "hopper": "../2/hopper.png",
+      "dripstone (point)": "../2/dripstone.png",
+      "dribstone (block)": "../2/dripstoneb.png",
+      "target": "../2/target.png",
+      "soul campfire": "../2/blue.png",
+      "campfire": "../2/fire.png",
+      "bee hive": "../2/beehive.png",
+      "bee hive w/ honey": "../2/honey.png",
+      "grindstone": "../2/grindstone.png",
+      "soil": "../2/soil.png",
+      "beetroot": "../2/beetroot.png",
+      "carrot": "../2/carrot.png",
+      "sugarcane": "../2/cane.png",
+      "hay bale": "../2/hay.png",
+      "barrel": "../2/barrel.png",
+      "Infect": "../2/infect.png",
+      "Cure": "../2/cure.png",
+      "Frog": "../2/infect.png",
+      "Flower": "../2/flower.png",
+      "Endstone": "../2/endstone.png",
+      "Purpur block": "../2/purpur.png",
+      "Purpur brick": "../2/purpurb.png",
+      "Nether brick": "../2/netherb.png",
+      "Dried ghast": "../2/dg.png",
+      "Bone block": "../2/boneb.png",
+      "Soul sand": "../2/ss.png",
+      "Soul soil": "../2/s.png",
+      "Bamboo": "../2/bamboo.png",
+      "Shulker mob (animateted)": "../2/hi.png",
+      "Bamboo plank": "../2/bamboop.png",
+      "Bamboo plank 2": "../2/bamboop2.png",
+      "Crimson wood": "../2/cw.png",
+      "Warped wood": "../2/ww.png",
+      "Cherry wood": "../2/chw.png",
+      "Cherry plank": "../2/cplank.png",
+      "Spruce wood": "../2/spruce.png",
+      "Spruce plank": "../2/sprucep.png",
+      "Pale oak": "../2/pale.png",
+      "Pale oak plank": "../2/palep.png",
+      "Stone brick": "../2/stoneb.png",
+      "Stone brick 2": "../2/stonebb.png",
+      "Pumpkin": "../2/pumpkin.png",
+      "Carved Pumpkin": "../2/cpumkin.png",
+      "Jack o lantern": "../2/jack.png",
+      "Melon": "../2/melon.png",
+      "Carved melon": "../2/cmelon.png",
+      "Mack o lantern": "../2/mack.png",
+      "Snow": "../2/snow.png",
+      "Clay": "../2/clay.png",
+      "JukeBox": "../2/jukebox.png",
+      "Granit": "../2/granit.png",
+      "Diorite": "../2/diorite.png",
+      "Monster Spawner": "../2/spawner.png",
+      "Zombie head": "../2/zhead.png",
+      "Wither skeleton head": "../2/whead.png",
+      "Bad wood (birch)": "../2/birch.png",
+      "Bad plank (birch plank)": "../2/birchp.png",
+      "Grass (particle)": "../2/g.png",
+      "Dried grass": "../2/gd.png",
+      "Cactus": "../2/cactus.png",
+      "Flower Cactus": "../2/fcactus.png",
+      "Rose Bush": "../2/rose.png",
+      "Depslate": "../2/d.png",
+      "Depslate redstone": "../2/dredstone.png",
+      "Depslate iron": "../2/diron.png",
+      "Depslate diamond": "../2/ddiamond.png",
+      "Depslate lapiz": "../2/dlapiz.png",
+      "Lapiz ore": "../2/lapiz.png",
+      "Depslate emerald": "../2/demerald.png",
+      "Depslate Coal": "../2/dcoal.png",
+      "Depslate copper": "../2/dcopper.png",
+    };
+
+    const spawnEggTextures = {
+      "Frog Spawn Egg": "../2/frog_egg.png",
+      "Cow Spawn Egg": "../2/cow_egg.png",
+      "Chicken Spawn Egg": "../2/chicken_egg.png",
+      "Chick Spawn Egg": "../2/chick_egg.png",
+      "Duck Spawn Egg": "../2/duck_egg.png",
+      "Bob Spawn Egg": "../2/bob_egg.png",
+      "Lilly Spawn Egg": "../2/lilly_egg.png",
+      "Zombie Spawn Egg": "../2/zombie_egg.png",
+      "Baby Spawn Egg": "../2/baby_egg.png",
+      "Child Spawn Egg": "../2/child_egg.png",
+      "Bee Spawn Egg": "../2/bee_egg.png",
+      "Ghast Spawn Egg": "../2/ghast_egg.png",
+      "Iron Golem Spawn Egg": "../2/irong_egg.png",
+      "Wither Spawn Egg": "../2/wither_egg.png"
+    };
+
+    const errorTexture = "../2/er.png";
+    const deathTexture = "../2/death.png";
+    let currentBlockType = "Grass";
+    let showMenu = false;
+    let textures = {};
+    let filteredItems = Object.keys(blockTextures);
+    let currentMenuType = "blocks";
+
+    const animalProperties = {
+      "Frog": { 
+        textureName: "frog", 
+        speed: 2,
+        faction: FACTION.PEACEFUL,
+        hopHeight: 10,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 10,
+        canFly: false
+      },
+      "Cow": { 
+        textureName: "cow", 
+        speed: 1,
+        faction: FACTION.PEACEFUL,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 15,
+        canFly: false
+      },
+      "Chicken": { 
+        textureName: "chicken", 
+        speed: 1.5,
+        faction: FACTION.PEACEFUL,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 8,
+        canFly: false
+      },
+      "Duck": { 
+        textureName: "duck", 
+        speed: 1.8,
+        faction: FACTION.PEACEFUL,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 10,
+        canFly: false
+      },
+      "Chick": { 
+        textureName: "chick", 
+        speed: 1.8,
+        faction: FACTION.PEACEFUL,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 5,
+        canFly: false
+      },
+      "Bob": { 
+        textureName: "bob", 
+        speed: 2,
+        faction: FACTION.HUMAN,
+        thinkTime: 2000,
+        moveTime: 3000,
+        hunger: 10,
+        health: 10,
+        canFly: false
+      },
+      "Lilly": { 
+        textureName: "lilly", 
+        speed: 2,
+        faction: FACTION.HUMAN,
+        thinkTime: 2000,
+        moveTime: 3000,
+        hunger: 10,
+        health: 10,
+        canFly: false
+      },
+      "Zombie": { 
+        textureName: "zombie", 
+        speed: 1.5,
+        faction: FACTION.HOSTILE,
+        thinkTime: 1000,
+        moveTime: 4000,
+        health: 15,
+        canFly: false,
+        attackRange: 50
+      },
+      "Baby": { 
+        textureName: "baby", 
+        speed: 0,
+        faction: FACTION.HUMAN,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 5,
+        canFly: false
+      },
+      "Child": { 
+        textureName: "child", 
+        speed: 1.5,
+        faction: FACTION.HUMAN,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 8,
+        canFly: false
+      },
+      "Bee": { 
+        textureName: "bee", 
+        speed: 2,
+        faction: FACTION.PEACEFUL,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 10,
+        canFly: true
+      },
+      "Ghast": { 
+        textureName: "ghast", 
+        speed: 2,
+        faction: FACTION.HOSTILE,
+        thinkTime: 2000,
+        moveTime: 3000,
+        attackRange: 300,
+        fireballCooldown: 3000,
+        health: 20,
+        canFly: true
+      },
+      "Iron Golem": { 
+        textureName: "irong", 
+        speed: 1,
+        faction: FACTION.PEACEFUL,
+        thinkTime: 2000,
+        moveTime: 3000,
+        health: 50,
+        canFly: false
+      },
+      "Wither": { 
+        textureName: "wither", 
+        speed: 1.5,
+        faction: FACTION.HOSTILE,
+        thinkTime: 2000,
+        moveTime: 3000,
+        attackRange: 400,
+        skullCooldown: 20000,
+        skullCount: 3,
+        maxSkulls: 3,
+        health: 100,
+        canFly: true
+      },
+      "Dried ghast": {
+        textureName: "dg",
+        speed: 0,
+        faction: FACTION.NEUTRAL,
+        thinkTime: 2000,
+        moveTime: 3000,
+        submergedTimer: 0,
+        transformTime: 20000,
+        health: 15,
+        canFly: false
+      }
+    };
+
+    class SpriteAnimationBlock {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = blockSize;
+        this.height = blockSize;
+        this.spriteSheet = new Image();
+        this.spriteSheet.src = "../2/hi.png";
+        this.frameWidth = 32;
+        this.frameHeight = 32;
+        this.totalFrames = 16;
+        this.currentFrame = 0;
+        this.fps = 10;
+        this.frameTime = 1000 / this.fps;
+        this.lastFrameTime = 0;
+      }
+
+      update(timestamp) {
+        if (timestamp - this.lastFrameTime > this.frameTime) {
+          this.lastFrameTime = timestamp;
+          this.currentFrame = (this.currentFrame + 1) % this.totalFrames;
+        }
+      }
+
+      draw() {
+        if (this.spriteSheet.complete) {
+          const scaleX = this.width / this.frameWidth;
+          const scaleY = this.height / this.frameHeight;
+          const scale = Math.min(scaleX, scaleY);
+          ctx.drawImage(
+            this.spriteSheet,
+            0, this.currentFrame * this.frameHeight,
+            this.frameWidth, this.frameHeight,
+            this.x, this.y,
+            this.frameWidth * scale, this.frameHeight * scale
+          );
+        }
+      }
+    }
+
+    class Projectile {
+      constructor(x, y, targetX, targetY, type, damage, radius, faction) {
+        this.x = x;
+        this.y = y;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.width = 20;
+        this.height = 20;
+        this.speed = 5;
+        this.type = type;
+        this.damage = damage;
+        this.explosionRadius = radius;
+        this.faction = faction;
+        
+        this.texture = new Image();
+        this.texture.src = type === "fireball" ? "../2/fireball.png" : "../2/wither_skull.png";
+        
+        // Calculate direction
+        const dx = targetX - x;
+        const dy = targetY - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        this.vx = (dx / distance) * this.speed;
+        this.vy = (dy / distance) * this.speed;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Check if out of bounds
+        if (this.x + this.width < 0 || this.x > canvas.width || 
+            this.y + this.height < 0 || this.y > canvas.height) {
+          this.remove();
+          return;
+        }
+
+        // Check collision with blocks
+        for (let i = 0; i < world.length; i++) {
+          const block = world[i];
+          if (this.collidesWith(block)) {
+            this.explode(block.x, block.y);
+            this.remove();
+            return;
+          }
+        }
+
+        // Check collision with mobs
+        animals.forEach(animal => {
+          if (this.collidesWith(animal)) {
+            // Only hit valid targets based on faction
+            if ((this.faction === FACTION.HOSTILE && (animal.faction === FACTION.HUMAN || animal.faction === FACTION.PEACEFUL)) ||
+                (this.faction === FACTION.NEUTRAL && animal.faction === FACTION.HOSTILE)) {
+              this.explode(animal.x, animal.y);
+              this.remove();
+              return;
+            }
+          }
+        });
+      }
+
+      collidesWith(obj) {
+        return this.x < obj.x + obj.width &&
+               this.x + this.width > obj.x &&
+               this.y < obj.y + obj.height &&
+               this.y + this.height > obj.y;
+      }
+
+      explode(x, y) {
+        // Damage blocks
+        for (let i = world.length - 1; i >= 0; i--) {
+          const block = world[i];
+          const dx = block.x - x;
+          const dy = block.y - y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < this.explosionRadius * blockSize) {
+            world.splice(i, 1);
+          }
+        }
+
+        // Damage mobs
+        animals.forEach(animal => {
+          const dx = animal.x - x;
+          const dy = animal.y - y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < this.explosionRadius * blockSize) {
+            // Check faction rules
+            if ((this.faction === FACTION.HOSTILE && (animal.faction === FACTION.HUMAN || animal.faction === FACTION.PEACEFUL)) ||
+                (this.faction === FACTION.NEUTRAL && animal.faction === FACTION.HOSTILE)) {
+              animal.health -= this.damage;
+              if (animal.health <= 0) {
+                animal.isDead = true;
+              }
+            }
+          }
+        });
+      }
+
+      remove() {
+        const array = this.type === "fireball" ? fireballs : witherSkulls;
+        const index = array.indexOf(this);
+        if (index !== -1) {
+          array.splice(index, 1);
+        }
+      }
+
+      draw() {
+        ctx.drawImage(this.texture, this.x, this.y, this.width, this.height);
+      }
+    }
+
+    class Animal {
+      constructor(x, y, type, speed) {
+        const props = animalProperties[type];
+        this.type = type;
+        this.x = x;
+        this.y = y;
+        this.width = blockSize;
+        this.height = blockSize;
+        this.speed = speed || props.speed;
+        this.gravity = props.canFly ? 0 : 1;
+        this.velocityY = 0;
+        this.isOnGround = false;
+        this.direction = Math.random() > 0.5 ? 1 : -1;
+        this.isTrapped = false;
+        this.faction = props.faction;
+        this.thinkTimer = props.thinkTime || 2000;
+        this.moveTimer = 0;
+        this.currentDirection = 0;
+        this.isMoving = false;
+        this.jumpCooldown = 0;
+        this.health = props.health || 10;
+        this.attackRange = props.attackRange || 0;
+        this.fireballCooldown = props.fireballCooldown || 0;
+        this.skullCooldown = props.skullCooldown || 0;
+        this.skullCount = props.skullCount || 0;
+        this.maxSkulls = props.maxSkulls || 0;
+        this.submergedTimer = props.submergedTimer || 0;
+        this.transformTime = props.transformTime || 0;
+        this.hasCrown = type === "Frog" && Math.random() < 0.1;
+        this.isZombie = type === "Zombie";
+        this.eatCooldown = 0;
+        this.jumpHeight = type === "Frog" ? Infinity : 2 * blockSize;
+        this.originalType = type;
+        this.isFrog = type === "Frog";
+        this.bounceCooldown = 0;
+        this.isBaby = type === "Baby";
+        this.isChild = type === "Child";
+        this.growthTimer = 0;
+        this.isDead = false;
+        this.underwaterTimer = 0;
+        this.isInLove = false;
+        this.canFly = props.canFly || false;
+        this.hasPollen = false;
+        this.targetHive = null;
+        this.targetFlower = null;
+        this.textureName = props.textureName;
+        this.infectionCooldown = 0;
+
+        if (this.hasCrown) this.textureName = "crown";
+
+        this.rightTexture = new Image();
+        this.rightTexture.src = `../2/${this.textureName}.png`;
+        this.rightTexture.onerror = () => { this.rightTexture.src = errorTexture; };
+
+        this.leftTexture = new Image();
+        this.leftTexture.src = `../2/left${this.textureName}.png`;
+        this.leftTexture.onerror = () => { this.leftTexture.src = errorTexture; };
+
+        this.trappedTexture = new Image();
+        this.trappedTexture.src = `../2/trap${this.textureName}.png`;
+        this.trappedTexture.onerror = () => { this.trappedTexture.src = errorTexture; };
+
+        this.deathTexture = new Image();
+        this.deathTexture.src = deathTexture;
+        this.deathTexture.onerror = () => { this.deathTexture.src = errorTexture; };
+
+        this.currentTexture = this.leftTexture;
+      }
+
+      isSurrounded() {
+        const gridX = Math.floor(this.x / blockSize);
+        const gridY = Math.floor(this.y / blockSize);
+
+        const hasBlockAbove = world.some(block => block.x === gridX * blockSize && block.y === (gridY - 1) * blockSize);
+        const hasBlockBelow = world.some(block => block.x === gridX * blockSize && block.y === (gridY + 1) * blockSize);
+        const hasBlockLeft = world.some(block => block.x === (gridX - 1) * blockSize && block.y === gridY * blockSize);
+        const hasBlockRight = world.some(block => block.x === (gridX + 1) * blockSize && block.y === gridY * blockSize);
+
+        return hasBlockAbove && hasBlockBelow && hasBlockLeft && hasBlockRight;
+      }
+
+      detectAndEatAnimals() {
+        if (this.eatCooldown > 0 || !(this.type === "Bob" || this.type === "Lilly") || this.health >= 5) {
+          this.eatCooldown--;
+          return;
+        }
+
+        const detectionRange = 50;
+        for (let i = 0; i < animals.length; i++) {
+          const animal = animals[i];
+          if (animal === this || animal.isZombie) continue;
+
+          const dx = animal.x - this.x;
+          const dy = animal.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < detectionRange) {
+            animals.splice(i, 1);
+            this.health = Math.min(this.health + 2, 10);
+            this.eatCooldown = 300;
+            break;
+          }
+        }
+      }
+
+      checkForWall() {
+        const gridX = Math.floor(this.x / blockSize);
+        const gridY = Math.floor(this.y / blockSize);
+        const nextX = gridX + this.currentDirection;
+        const nextY = gridY;
+        const hasBlock = world.some(block => block.x === nextX * blockSize && block.y === nextY * blockSize);
+        const hasTallWall = world.some(block => block.x === nextX * blockSize && block.y === (nextY - 1) * blockSize);
+        return hasBlock || hasTallWall;
+      }
+
+      updateAI(timestamp) {
+        if (this.type === "Zombie") {
+          // Special zombie AI - chase nearest human/peaceful mob
+          let closestTarget = null;
+          let closestDistance = Infinity;
+          
+          animals.forEach(animal => {
+            if (animal === this || 
+                animal.faction === FACTION.HOSTILE || 
+                animal.faction === FACTION.NEUTRAL) return;
+                
+            const dx = animal.x - this.x;
+            const dy = animal.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < closestDistance && distance < this.attackRange) {
+              closestDistance = distance;
+              closestTarget = animal;
+            }
+          });
+
+          if (closestTarget) {
+            // Move toward target
+            this.currentDirection = closestTarget.x > this.x ? 1 : -1;
+            this.isMoving = true;
+            
+            // Jump occasionally to overcome small obstacles
+            if (this.isOnGround && Math.random() < 0.05) {
+              this.velocityY = -10;
+            }
+            return; // Skip normal AI when chasing
+          }
+        }
+        
+        // Normal AI for when not chasing
+        if (this.thinkTimer > 0) {
+          this.thinkTimer -= 16;
+          this.currentDirection = 0;
+          this.isMoving = false;
+          
+          if (this.thinkTimer <= 0) {
+            this.currentDirection = Math.random() > 0.5 ? 1 : -1;
+            this.moveTimer = animalProperties[this.type].moveTime || 3000;
+            this.isMoving = true;
+          }
+        } else if (this.moveTimer > 0) {
+          this.moveTimer -= 16;
+          this.isMoving = true;
+          
+          if (this.moveTimer <= 0) {
+            this.thinkTimer = animalProperties[this.type].thinkTime || 2000;
+            this.currentDirection = 0;
+            this.isMoving = false;
+          }
+        }
+      }
+
+      updateHostile() {
+        if (this.type === "Ghast") {
+          this.updateGhast();
+        } else if (this.type === "Wither") {
+          this.updateWither();
+        }
+      }
+
+      updateGhast() {
+        if (this.fireballCooldown <= 0) {
+          const target = this.findTarget();
+          if (target) {
+            fireballs.push(new Projectile(
+              this.x, this.y, 
+              target.x, target.y, 
+              "fireball", 
+              8,
+              5,
+              FACTION.HOSTILE
+            ));
+            this.fireballCooldown = animalProperties[this.type].fireballCooldown;
+          }
+        } else {
+          this.fireballCooldown -= 16;
+        }
+      }
+
+      updateWither() {
+        if (this.skullCount < this.maxSkulls) {
+          if (this.skullCooldown <= 0) {
+            this.skullCount++;
+            this.skullCooldown = animalProperties[this.type].skullCooldown;
+          } else {
+            this.skullCooldown -= 16;
+          }
+        }
+
+        if (this.skullCount > 0) {
+          const target = this.findTarget();
+          if (target) {
+            witherSkulls.push(new Projectile(
+              this.x, this.y, 
+              target.x, target.y, 
+              "skull", 
+              12,
+              6,
+              FACTION.HOSTILE
+            ));
+            this.skullCount--;
+          }
+        }
+      }
+
+      findTarget() {
+        let closestTarget = null;
+        let closestDistance = Infinity;
+
+        animals.forEach(animal => {
+          if (animal === this) return;
+          
+          if (animal.faction === FACTION.HUMAN || animal.faction === FACTION.PEACEFUL) {
+            const dx = animal.x - this.x;
+            const dy = animal.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < closestDistance && distance < this.attackRange) {
+              closestDistance = distance;
+              closestTarget = animal;
+            }
+          }
+        });
+
+        return closestTarget;
+      }
+
+      updateDriedGhast() {
+        let isSubmerged = false;
+        for (const block of world) {
+          if (block.type === "Water" &&
+              this.x >= block.x && this.x <= block.x + blockSize &&
+              this.y >= block.y && this.y <= block.y + blockSize) {
+            isSubmerged = true;
+            break;
+          }
+        }
+
+        if (isSubmerged) {
+          this.submergedTimer += 16;
+          if (this.submergedTimer >= this.transformTime) {
+            const index = animals.indexOf(this);
+            animals.splice(index, 1);
+            animals.push(new Animal(this.x, this.y, "Ghast", 2));
+          }
+        } else {
+          this.submergedTimer = Math.max(0, this.submergedTimer - 8);
+        }
+      }
+
+      update() {
+        if (isPaused || this.isDead) return;
+
+        if (this.type === "Dried ghast") {
+          this.updateDriedGhast();
+          return;
+        }
+
+        this.updateAI(Date.now());
+
+        // Zombie infection/eating logic
+        if (this.type === "Zombie" && this.infectionCooldown <= 0 && !this.isTrapped) {
+          animals.forEach((otherAnimal, index) => {
+            // Skip self and other zombies/withers
+            if (otherAnimal === this || 
+                otherAnimal.faction === FACTION.HOSTILE || 
+                otherAnimal.faction === FACTION.NEUTRAL) return;
+
+            // Check if touching another animal
+            if (this.x < otherAnimal.x + otherAnimal.width &&
+                this.x + this.width > otherAnimal.x &&
+                this.y < otherAnimal.y + otherAnimal.height &&
+                this.y + this.height > otherAnimal.y) {
+              
+              // 50% chance to infect, 50% to eat
+              if (Math.random() < 0.5) {
+                // Infection effect
+                effects.push({
+                  x: otherAnimal.x + otherAnimal.width/2,
+                  y: otherAnimal.y + otherAnimal.height/2,
+                  type: "infection",
+                  lifetime: 60
+                });
+                
+                // Infect - turn into zombie
+                otherAnimal.isZombie = true;
+                otherAnimal.textureName = "zombie";
+                otherAnimal.rightTexture.src = `../2/zombie.png`;
+                otherAnimal.leftTexture.src = `../2/leftzombie.png`;
+                otherAnimal.trappedTexture.src = `../2/trapzombie.png`;
+                otherAnimal.faction = FACTION.HOSTILE;
+                otherAnimal.type = "Zombie";
+                otherAnimal.speed = animalProperties["Zombie"].speed;
+              } else {
+                // Eat - remove the mob
+                effects.push({
+                  x: otherAnimal.x + otherAnimal.width/2,
+                  y: otherAnimal.y + otherAnimal.height/2,
+                  type: "blood",
+                  lifetime: 30
+                });
+                animals.splice(index, 1);
+              }
+              this.infectionCooldown = 60; // 1 second cooldown (at 60fps)
+            }
+          });
+        } else if (this.infectionCooldown > 0) {
+          this.infectionCooldown--;
+        }
+
+        if (this.isSurrounded()) {
+          this.isTrapped = true;
+          this.currentTexture = this.trappedTexture;
+          return;
+        } else {
+          this.isTrapped = false;
+        }
+
+        if (!this.canFly && !this.isOnGround) {
+          this.velocityY += this.gravity;
+          this.y += this.velocityY;
+        }
+
+        if (!this.canFly) {
+          this.isOnGround = false;
+          for (const block of world) {
+            if (
+              this.x < block.x + blockSize &&
+              this.x + this.width > block.x &&
+              this.y + this.height >= block.y &&
+              this.y + this.height <= block.y + blockSize
+            ) {
+              this.y = block.y - this.height;
+              this.velocityY = 0;
+              this.isOnGround = true;
+
+              if (block.type === "Infect") {
+                this.isZombie = true;
+                this.textureName = "zombie";
+                this.rightTexture.src = `../2/zombie.png`;
+                this.leftTexture.src = `../2/leftzombie.png`;
+                this.trappedTexture.src = `../2/trapzombie.png`;
+              } else if (block.type === "Cure") {
+                const nonZombieTypes = Object.keys(animalProperties).filter(type => type !== "Zombie");
+                const randomType = nonZombieTypes[Math.floor(Math.random() * nonZombieTypes.length)];
+                this.isZombie = false;
+                this.textureName = animalProperties[randomType].textureName;
+                this.rightTexture.src = `../2/${this.textureName}.png`;
+                this.leftTexture.src = `../2/left${this.textureName}.png`;
+                this.trappedTexture.src = `../2/trap${this.textureName}.png`;
+              } else if (block.type === "Frog") {
+                this.textureName = "frog";
+                this.rightTexture.src = `../2/frog.png`;
+                this.leftTexture.src = `../2/leftfrog.png`;
+                this.trappedTexture.src = `../2/trapfrog.png`;
+              }
+
+              if (block.type === "Lava") {
+                this.health -= 5;
+                if (this.health <= 0) {
+                  this.isDead = true;
+                  this.currentTexture = this.deathTexture;
+                  return;
+                }
+              }
+
+              if (block.type === "Water") {
+                this.underwaterTimer++;
+                if (this.underwaterTimer >= 600) {
+                  this.isDead = true;
+                  this.currentTexture = this.deathTexture;
+                  return;
+                }
+              } else {
+                this.underwaterTimer = 0;
+              }
+            }
+          }
+        }
+
+        if (this.isBaby) {
+          return;
+        }
+
+        if (this.isMoving && !this.canFly && this.checkForWall() && !this.isFrog) {
+          this.currentDirection *= -1;
+        }
+
+        if (this.isMoving) {
+          this.x += this.speed * this.currentDirection;
+
+          if (this.currentDirection === 1) {
+            this.currentTexture = this.leftTexture;
+          } else {
+            this.currentTexture = this.rightTexture;
+          }
+
+          if (this.x < 0 || this.x + this.width > canvas.width) {
+            this.currentDirection *= -1;
+          }
+        }
+
+        if (this.type === "Bob" || this.type === "Lilly") {
+          this.detectAndEatAnimals();
+        }
+
+        if (this.isFrog && this.isOnGround && Math.random() < 0.01) {
+          this.velocityY = -10;
+        }
+
+        if (this.isBaby || this.isChild) {
+          this.growthTimer++;
+          if (this.isBaby && this.growthTimer >= 3600) {
+            this.type = "Child";
+            this.textureName = "child";
+            this.isBaby = false;
+            this.isChild = true;
+            this.growthTimer = 0;
+            this.rightTexture.src = `../2/child.png`;
+            this.leftTexture.src = `../2/leftchild.png`;
+            this.trappedTexture.src = `../2/trapchild.png`;
+          } else if (this.isChild && this.growthTimer >= 3600) {
+            const newType = Math.random() < 0.5 ? "Bob" : "Lilly";
+            this.type = newType;
+            this.textureName = newType.toLowerCase();
+            this.isChild = false;
+            this.growthTimer = 0;
+            this.rightTexture.src = `../2/${this.textureName}.png`;
+            this.leftTexture.src = `../2/left${this.textureName}.png`;
+            this.trappedTexture.src = `../2/trap${this.textureName}.png`;
+          }
+        }
+
+        if (this.faction === FACTION.HOSTILE) {
+          this.updateHostile();
+        } 
+      }
+
+      draw() {
+        if (this.currentTexture.complete) {
+          ctx.drawImage(this.currentTexture, this.x, this.y, this.width, this.height);
+        }
+      }
+    }
+
+    function loadTextures() {
+      const loadedTextures = {};
+      for (const type in blockTextures) {
+        const img = new Image();
+        img.src = blockTextures[type];
+        img.onerror = () => {
+          img.src = errorTexture;
+        };
+        loadedTextures[type] = img;
+      }
+      for (const type in spawnEggTextures) {
+        const img = new Image();
+        img.src = spawnEggTextures[type];
+        img.onerror = () => {
+          img.src = errorTexture;
+        };
+        loadedTextures[type] = img;
+      }
+      return loadedTextures;
+    }
+
+    textures = loadTextures();
+
+    function generateFlatTerrain() {
+      world.length = 0;
+      const rows = Math.floor(canvas.height / blockSize);
+      const cols = Math.floor(canvas.width / blockSize);
+
+      for (let x = 0; x < cols; x++) {
+        for (let y = rows - 1; y >= rows - 5; y--) {
+          if (y === rows - 1) {
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Grass" });
+          } else if (y === rows - 2 || y === rows - 3) {
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Dirt" });
+          } else if (y === rows - 4 || y === rows - 5) {
+            world.push({ x: x * blockSize, y: y * blockSize, type: "Stone" });
+          }
+        }
+      }
+
+      for (let x = 0; x < cols; x++) {
+        if (Math.random() < 0.1) {
+          spawnTree(x * blockSize, (rows - 5) * blockSize);
+        }
+      }
+
+      const animalTypes = Object.keys(animalProperties);
+      const numAnimals = Math.floor(Math.random() * 5) + 1;
+      for (let i = 0; i < numAnimals; i++) {
+        const randomType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+        const x = Math.floor(Math.random() * cols) * blockSize;
+        const y = (rows - 5) * blockSize;
+        animals.push(new Animal(x, y, randomType, animalProperties[randomType].speed));
+      }
+    }
+
+    function spawnTree(x, y) {
+      const trunkHeight = 3;
+      const foliageWidth = 3;
+
+      for (let i = 0; i < trunkHeight; i++) {
+        world.push({ x: x, y: y - i * blockSize, type: "Wood" });
+      }
+
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          if (i !== 0 || j !== 0) {
+            world.push({ x: x + i * blockSize, y: y - trunkHeight * blockSize + j * blockSize, type: "Leaf" });
+          }
+        }
+      }
+    }
+
+    function updateBlockPhysics() {
+      const now = Date.now();
+      if (now - lastPhysicsUpdate < PHYSICS_UPDATE_INTERVAL) return;
+      lastPhysicsUpdate = now;
+
+      // Process falling blocks (sand/gravel/water/lava)
+      for (let i = world.length - 1; i >= 0; i--) {
+        const block = world[i];
+        const physics = physicsBlocks[block.type];
+        
+        if (physics && (physics.falls || physics.fluid)) {
+          const below = world.find(b => b.x === block.x && b.y === block.y + blockSize);
+          const canPassThrough = below && physicsBlocks[below.type]?.fluid;
+          
+          if (!below || canPassThrough) {
+            // Move block down
+            world.splice(i, 1);
+            block.y += blockSize;
+            world.push(block);
+            
+            // Check if landed on solid ground
+            const landedOnSolid = world.some(b => 
+              b.x === block.x && 
+              b.y === block.y + blockSize && 
+              !physicsBlocks[b.type]?.fluid
+            );
+            
+            if (landedOnSolid && physics.spread > 0) {
+              // Spread horizontally when hitting ground
+              for (let s = 1; s <= physics.spread; s++) {
+                // Spread left
+                if (!world.some(b => b.x === block.x - s*blockSize && b.y === block.y)) {
+                  world.push({
+                    x: block.x - s*blockSize,
+                    y: block.y,
+                    type: block.type,
+                    fluidLevel: physics.maxLevel - s,
+                    isSource: false
+                  });
+                }
+                
+                // Spread right
+                if (!world.some(b => b.x === block.x + s*blockSize && b.y === block.y)) {
+                  world.push({
+                    x: block.x + s*blockSize,
+                    y: block.y,
+                    type: block.type,
+                    fluidLevel: physics.maxLevel - s,
+                    isSource: false
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
+
+      // Process fluid spread for existing fluid blocks
+      const newFluidBlocks = [];
+      for (let i = world.length - 1; i >= 0; i--) {
+        const block = world[i];
+        const physics = physicsBlocks[block.type];
+        
+        if (physics && physics.fluid) {
+          if (block.fluidLevel === undefined) {
+            block.fluidLevel = physics.maxLevel;
+            block.isSource = true;
+          }
+          
+          if (block.fluidLevel < physics.maxLevel) continue;
+          
+          const adjacent = [
+            {x: block.x, y: block.y + blockSize},
+            {x: block.x - blockSize, y: block.y},
+            {x: block.x + blockSize, y: block.y},
+            {x: block.x, y: block.y - blockSize}
+          ];
+          
+          for (const pos of adjacent) {
+            const existingBlock = world.find(b => b.x === pos.x && b.y === pos.y);
+            if (existingBlock && !physicsBlocks[existingBlock.type]?.fluid) continue;
+            
+            const existingFluid = world.find(b => 
+              b.x === pos.x && b.y === pos.y && 
+              physicsBlocks[b.type]?.fluid && 
+              b.fluidLevel >= block.fluidLevel - 1
+            );
+            if (existingFluid) continue;
+            
+            const newLevel = block.fluidLevel - 1;
+            if (newLevel > 0) {
+              newFluidBlocks.push({
+                x: pos.x,
+                y: pos.y,
+                type: block.type,
+                fluidLevel: newLevel,
+                isSource: false
+              });
+            }
+          }
+        }
+      }
+      
+      world.push(...newFluidBlocks);
+    }
+
+    function checkStructures() {
+      // Iron Golem (4 iron blocks + pumpkin)
+      for (let i = world.length - 1; i >= 0; i--) {
+          const block = world[i];
+          if (block.type.toLowerCase() === "pumpkin") {
+              const x = block.x;
+              const y = block.y;
+              
+              // Check for T-shape iron blocks below (case insensitive)
+              const arm1 = world.find(b => 
+                  b.x === x - blockSize && 
+                  b.y === y + blockSize && 
+                  b.type.toLowerCase() === "iron block"
+              );
+              const arm2 = world.find(b => 
+                  b.x === x && 
+                  b.y === y + blockSize && 
+                  b.type.toLowerCase() === "iron block"
+              );
+              const arm3 = world.find(b => 
+                  b.x === x + blockSize && 
+                  b.y === y + blockSize && 
+                  b.type.toLowerCase() === "iron block"
+              );
+              const leg = world.find(b => 
+                  b.x === x && 
+                  b.y === y + 2*blockSize && 
+                  b.type.toLowerCase() === "iron block"
+              );
+              
+              if (arm1 && arm2 && arm3 && leg) {
+                  // Remove the structure blocks
+                  world.splice(world.indexOf(block), 1);
+                  world.splice(world.indexOf(arm1), 1);
+                  world.splice(world.indexOf(arm2), 1);
+                  world.splice(world.indexOf(arm3), 1);
+                  world.splice(world.indexOf(leg), 1);
+                  
+                  // Spawn Iron Golem
+                  animals.push(new Animal(x, y, "Iron Golem", 1));
+                  break;
+              }
+          }
+      }
+      
+      // Wither (4 soul sand + 3 wither skeleton heads)
+      const witherHeads = world.filter(block => 
+          block.type.toLowerCase() === "wither skeleton head"
+      );
+      
+      for (const head of witherHeads) {
+          const x = head.x;
+          const y = head.y;
+          
+          // Find the other two heads in a horizontal line
+          const headLeft = world.find(b => 
+              b.x === x - blockSize && 
+              b.y === y && 
+              b.type.toLowerCase() === "wither skeleton head"
+          );
+          const headRight = world.find(b => 
+              b.x === x + blockSize && 
+              b.y === y && 
+              b.type.toLowerCase() === "wither skeleton head"
+          );
+          
+          if (headLeft && headRight) {
+              // Check for T-shape soul sand below
+              const sand1 = world.find(b => 
+                  b.x === x - blockSize && 
+                  b.y === y + blockSize && 
+                  b.type.toLowerCase() === "soul sand"
+              );
+              const sand2 = world.find(b => 
+                  b.x === x && 
+                  b.y === y + blockSize && 
+                  b.type.toLowerCase() === "soul sand"
+              );
+              const sand3 = world.find(b => 
+                  b.x === x + blockSize && 
+                  b.y === y + blockSize && 
+                  b.type.toLowerCase() === "soul sand"
+              );
+              const sand4 = world.find(b => 
+                  b.x === x && 
+                  b.y === y + 2*blockSize && 
+                  b.type.toLowerCase() === "soul sand"
+              );
+              
+              if (sand1 && sand2 && sand3 && sand4) {
+                  // Remove all structure blocks
+                  world.splice(world.indexOf(head), 1);
+                  world.splice(world.indexOf(headLeft), 1);
+                  world.splice(world.indexOf(headRight), 1);
+                  world.splice(world.indexOf(sand1), 1);
+                  world.splice(world.indexOf(sand2), 1);
+                  world.splice(world.indexOf(sand3), 1);
+                  world.splice(world.indexOf(sand4), 1);
+                  
+                  // Spawn Wither at center position above the heads
+                  animals.push(new Animal(x, y - blockSize, "Wither", 1.5));
+                  break;
+              }
+          }
+      }
+    }
+
+    function drawWorld(timestamp) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw blocks
+      world.forEach(block => {
+        if (physicsBlocks[block.type]?.fluid) {
+          const fluidHeight = blockSize * (block.fluidLevel / physicsBlocks[block.type].maxLevel);
+          ctx.save();
+          ctx.globalAlpha = 0.7;
+          ctx.drawImage(
+            textures[block.type], 
+            block.x, 
+            block.y + (blockSize - fluidHeight), 
+            blockSize, 
+            fluidHeight
+          );
+          ctx.restore();
+        } else if (block.type === "Shulker mob (animateted)") {
+          if (!block.spriteAnimation) {
+            block.spriteAnimation = new SpriteAnimationBlock(block.x, block.y);
+          }
+          block.spriteAnimation.update(timestamp);
+          block.spriteAnimation.draw();
+        } else if (textures[block.type]) {
+          ctx.drawImage(textures[block.type], block.x, block.y, blockSize, blockSize);
+        }
+      });
+
+      // Draw animals
+      animals.forEach(animal => animal.draw());
+      
+      // Draw projectiles
+      fireballs.forEach(fireball => {
+        fireball.update();
+        fireball.draw();
+      });
+      witherSkulls.forEach(skull => {
+        skull.update();
+        skull.draw();
+      });
+      
+      // Draw effects
+      for (let i = effects.length - 1; i >= 0; i--) {
+        const effect = effects[i];
+        effect.lifetime--;
+        
+        if (effect.lifetime <= 0) {
+          effects.splice(i, 1);
+          continue;
+        }
+        
+        if (effect.type === "infection") {
+          ctx.save();
+          ctx.globalAlpha = effect.lifetime / 60;
+          ctx.fillStyle = `rgba(0, 255, 0, ${0.5 * (effect.lifetime / 60)})`;
+          ctx.beginPath();
+          ctx.arc(effect.x, effect.y, 50 * (1 - effect.lifetime / 60), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else if (effect.type === "blood") {
+          ctx.save();
+          ctx.globalAlpha = effect.lifetime / 30;
+          ctx.fillStyle = `rgba(255, 0, 0, ${0.7 * (effect.lifetime / 30)})`;
+          ctx.beginPath();
+          ctx.arc(effect.x, effect.y, 30 * (1 - effect.lifetime / 30), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
+    function updateMenu() {
+      menuItems.innerHTML = "";
+      filteredItems.forEach((item) => {
+        const menuItem = document.createElement("div");
+        menuItem.textContent = item;
+        menuItem.classList.add("menu-item");
+
+        if (item === currentBlockType) {
+          menuItem.classList.add("selected");
+        }
+
+        menuItem.addEventListener("click", () => {
+          currentBlockType = item;
+          toggleMenu();
+        });
+
+        menuItems.appendChild(menuItem);
+      });
+    }
+
+    function toggleMenu() {
+      showMenu = !showMenu;
+      menuContainer.style.display = showMenu ? "block" : "none";
+      if (showMenu) {
+        updateMenu();
+      }
+    }
+
+    function saveCurrentChunk() {
+      chunkData[currentChunk - 1] = {
+        blocks: [...world],
+        animals: [...animals],
+      };
+    }
+
+    function loadChunk(chunkNumber) {
+      const chunk = chunkData[chunkNumber - 1];
+      world.length = 0;
+      animals.length = 0;
+      world.push(...chunk.blocks);
+      animals.push(...chunk.animals);
+      drawWorld(0);
+      chunkDisplay.textContent = `Chunk: ${chunkNumber}`;
+    }
+
+    function goToNextChunk() {
+      saveCurrentChunk();
+      currentChunk = currentChunk === totalChunks ? 1 : currentChunk + 1;
+      loadChunk(currentChunk);
+    }
+
+    function goToPreviousChunk() {
+      saveCurrentChunk();
+      currentChunk = currentChunk === 1 ? totalChunks : currentChunk - 1;
+      loadChunk(currentChunk);
+    }
+
+    function explodeTNT(x, y) {
+      const explosionRadius = 5;
+      const damage = 9;
+
+      for (let i = world.length - 1; i >= 0; i--) {
+        const block = world[i];
+        const dx = block.x - x;
+        const dy = block.y - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < explosionRadius * blockSize) {
+          world.splice(i, 1);
+        }
+      }
+
+      animals.forEach(animal => {
+        const dx = animal.x - x;
+        const dy = animal.y - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < explosionRadius * blockSize) {
+          animal.health -= damage;
+          if (animal.health <= 0) {
+            animal.isDead = true;
+          }
+        }
+      });
+    }
+
+    function handleMouseClick(event) {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      if (showMenu) return;
+
+      const gridX = Math.floor(mouseX / blockSize) * blockSize;
+      const gridY = Math.floor(mouseY / blockSize) * blockSize;
+
+      if (event.button === 0) {
+        for (let i = 0; i < world.length; i++) {
+          if (gridX === world[i].x && gridY === world[i].y) {
+            world.splice(i, 1);
+            break;
+          }
+        }
+
+        for (let i = 0; i < animals.length; i++) {
+          const animal = animals[i];
+          if (
+            mouseX >= animal.x &&
+            mouseX <= animal.x + animal.width &&
+            mouseY >= animal.y &&
+            mouseY <= animal.y + animal.height
+          ) {
+            animals.splice(i, 1);
+            break;
+          }
+        }
+      } else if (event.button === 1) {
+        for (let i = 0; i < world.length; i++) {
+          const block = world[i];
+          if (block.x === gridX && block.y === gridY && block.type === "TNT") {
+            explodeTNT(block.x, block.y);
+            world.splice(i, 1);
+            break;
+          }
+        }
+
+        const bob = animals.find(animal => animal.type === "Bob");
+        const lilly = animals.find(animal => animal.type === "Lilly");
+        if (bob && lilly) {
+          bob.x = canvas.width / 2 - blockSize / 2;
+          bob.y = canvas.height / 2 - blockSize / 2;
+          lilly.x = canvas.width / 2 - blockSize / 2;
+          lilly.y = canvas.height / 2 - blockSize / 2;
+          animals.push(new Animal(canvas.width / 2 - blockSize / 2, canvas.height / 2 - blockSize / 2, "Child", 1.5));
+        }
+
+        for (let i = 0; i < animals.length; i++) {
+          const animal = animals[i];
+          if (
+            animal.type === "Ghast" &&
+            mouseX >= animal.x &&
+            mouseX <= animal.x + animal.width &&
+            mouseY >= animal.y &&
+            mouseY <= animal.y + animal.height
+          ) {
+            const target = animals.find(animal => animal.type === "Bob" || animal.type === "Lilly");
+            if (target) {
+              fireballs.push(new Projectile(
+                animal.x, animal.y, 
+                target.x, target.y, 
+                "fireball", 
+                8,
+                5,
+                FACTION.HOSTILE
+              ));
+            }
+            break;
+          }
+        }
+      } else if (event.button === 2) {
+        const targetBlock = world.find(b => b.x === gridX && b.y === gridY);
+        
+        if (!targetBlock || (targetBlock && physicsBlocks[targetBlock.type]?.fluid)) {
+          if (currentBlockType.endsWith(" Spawn Egg")) {
+            const animalName = currentBlockType.replace(" Spawn Egg", "");
+            if (animalProperties[animalName]) {
+              const { speed } = animalProperties[animalName];
+              if (zombiesAreFriendly && animalName === "Zombie") {
+                const newType = Math.random() < 0.5 ? "Bob" : "Lilly";
+                animals.push(new Animal(gridX, gridY, newType, speed));
+              } else {
+                animals.push(new Animal(gridX, gridY, animalName, speed));
+              }
+            }
+          } else {
+            if (targetBlock) {
+              world.splice(world.indexOf(targetBlock), 1);
+            }
+            world.push({ x: gridX, y: gridY, type: currentBlockType });
+          }
+        }
+      }
+      drawWorld(0);
+    }
+
+    // Fullscreen functionality
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        canvas.requestFullscreen().catch(err => {
+          console.error(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    function handleFullscreenChange() {
+      if (document.fullscreenElement || 
+          document.webkitFullscreenElement ||
+          document.mozFullScreenElement ||
+          document.msFullscreenElement) {
+        resizeCanvas();
+      } else {
+        resizeCanvas();
+      }
+    }
+
+    function resizeCanvas() {
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
+      
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      
+      window.scrollTo(scrollX, scrollY);
+      
+      drawWorld(0);
+    }
+
+    // Set up event listeners
+    fullscreenButton.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+    window.addEventListener("resize", resizeCanvas);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "1") {
+        goToPreviousChunk();
+      }
+
+      if (event.key === "2") {
+        goToNextChunk();
+      }
+
+      if (event.key.toLowerCase() === "c") {
+        currentMenuType = "blocks";
+        filteredItems = Object.keys(blockTextures);
+        toggleMenu();
+      }
+
+      if (event.key.toLowerCase() === "s") {
+        currentMenuType = "spawnEggs";
+        filteredItems = Object.keys(spawnEggTextures);
+        toggleMenu();
+      }
+
+      if (event.key.toLowerCase() === " ") {
+        isPaused = !isPaused;
+      }
+
+      if (event.key.toLowerCase() === "v") {
+        const jsonData = JSON.stringify(chunkData);
+        const blob = new Blob([jsonData], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "world.json";
+        link.click();
+      }
+
+      if (event.key.toLowerCase() === "b") {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            const jsonData = JSON.parse(event.target.result);
+            chunkData.length = 0;
+            chunkData.push(...jsonData);
+            alert("World loaded successfully!");
+            loadChunk(currentChunk);
+          };
+          reader.readAsText(file);
+        };
+        input.click();
+      }
+
+      if (event.key === "5") {
+        zombiesAreFriendly = !zombiesAreFriendly;
+        alert(`Zombies are now ${zombiesAreFriendly ? "friendly (Bob/Lilly)" : "normal"}`);
+      }
+
+      if (event.key.toLowerCase() === "t") {
+        document.getElementById("texturePackInput").click();
+      }
+
+      if (event.key === "F11") {
+        event.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    document.getElementById("texturePackInput").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const zip = new JSZip();
+        zip.loadAsync(e.target.result).then((zip) => {
+          const assetFolder = zip.folder("asset");
+          if (!assetFolder) {
+            alert("The ZIP file must contain an 'asset' folder.");
+            return;
+          }
+
+          const blocksTexture = assetFolder.file("blocks.png");
+          if (blocksTexture) {
+            blocksTexture.async("blob").then((blob) => {
+              const url = URL.createObjectURL(blob);
+
+              for (const type in blockTextures) {
+                blockTextures[type] = url;
+              }
+
+              textures = loadTextures();
+              drawWorld(0);
+              alert("blocks.png loaded successfully! All block textures replaced.");
+            });
+          }
+
+          const allTexture = assetFolder.file("all.png");
+          const leftAllTexture = assetFolder.file("leftall.png");
+          const trapAllTexture = assetFolder.file("trapall.png");
+
+          if (allTexture && leftAllTexture && trapAllTexture) {
+            Promise.all([
+              allTexture.async("blob"),
+              leftAllTexture.async("blob"),
+              trapAllTexture.async("blob")
+            ]).then(([allBlob, leftAllBlob, trapAllBlob]) => {
+              const allUrl = URL.createObjectURL(allBlob);
+              const leftAllUrl = URL.createObjectURL(leftAllBlob);
+              const trapAllUrl = URL.createObjectURL(trapAllBlob);
+
+              animals.forEach(animal => {
+                animal.rightTexture = new Image();
+                animal.rightTexture.src = allUrl;
+                animal.leftTexture = new Image();
+                animal.leftTexture.src = leftAllUrl;
+                animal.trappedTexture = new Image();
+                animal.trappedTexture.src = trapAllUrl;
+              });
+
+              drawWorld(0);
+              alert("all.png, leftall.png, and trapall.png loaded successfully! All mob textures replaced.");
+            }).catch((error) => {
+              console.error("Failed to load mob textures:", error);
+              alert("Failed to load mob textures. Check the console for details.");
+            });
+          } else {
+            assetFolder.forEach((relativePath, file) => {
+              if (!file.dir) {
+                const fileName = relativePath.split("/").pop();
+                const textureKey = Object.keys(blockTextures).find(
+                  (key) => blockTextures[key].endsWith(fileName)
+                ) || Object.keys(spawnEggTextures).find(
+                  (key) => spawnEggTextures[key].endsWith(fileName)
+                );
+
+                if (textureKey) {
+                  file.async("blob").then((blob) => {
+                    const url = URL.createObjectURL(blob);
+
+                    if (blockTextures[textureKey]) {
+                      blockTextures[textureKey] = url;
+                    } else if (spawnEggTextures[textureKey]) {
+                      spawnEggTextures[textureKey] = url;
+                    }
+
+                    textures = loadTextures();
+                    drawWorld(0);
+                  });
+                }
+
+                animals.forEach(animal => {
+                  const textureName = animal.textureName;
+                  if (fileName === `${textureName}.png` || fileName === `left${textureName}.png` || fileName === `trap${textureName}.png`) {
+                    file.async("blob").then((blob) => {
+                      const url = URL.createObjectURL(blob);
+
+                      if (fileName === `${textureName}.png`) {
+                        animal.rightTexture = new Image();
+                        animal.rightTexture.src = url;
+                      } else if (fileName === `left${textureName}.png`) {
+                        animal.leftTexture = new Image();
+                        animal.leftTexture.src = url;
+                      } else if (fileName === `trap${textureName}.png`) {
+                        animal.trappedTexture = new Image();
+                        animal.trappedTexture.src = url;
+                      }
+
+                      drawWorld(0);
+                    });
+                  }
+                });
+              }
+            });
+
+            alert("Texture pack loaded successfully!");
+          }
+        }).catch((error) => {
+          console.error("Failed to load texture pack:", error);
+          alert("Failed to load the texture pack. Check the console for details.");
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    generateFlatTerrain();
+
+    canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+    canvas.addEventListener("mousedown", handleMouseClick);
+
+    function gameLoop(timestamp) {
+      if (!isPaused) {
+        animals.forEach(animal => animal.update());
+        updateBlockPhysics();
+        checkStructures();
+      }
+      drawWorld(timestamp);
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop(0);
+  </script>
+</body>
+</html>

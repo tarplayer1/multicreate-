@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multicreate Menu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .menu {
+            text-align: center;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 3em;
+            color: #333;
+        }
+
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            font-size: 1.2em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .button:focus {
+            outline: none;
+        }
+
+        .button-tertiary {
+            background-color: #FF9800;
+            margin-top: 10px;
+        }
+
+        .button-tertiary:hover {
+            background-color: #FB8C00;
+        }
+
+        .button-quaternary {
+            background-color: #9C27B0;
+            margin-top: 10px;
+        }
+
+        .button-quaternary:hover {
+            background-color: #8E24AA;
+        }
+    </style>
+            <link rel="icon" type="image/x-icon" href="asset/grass.png">
+</head>
+<body>
+
+    <div class="menu">
+        <h1>Welcome to Multicreate&copy;</h1>
+        <p>Choose how you'd like to start:</p>
+        <button class="button" onclick="window.location.href='nav/game.html'">Start Game</button>
+        <button class="button button-tertiary" onclick="window.location.href='nav/credits.html'">Credits</button>
+        <button class="button button-quaternary" onclick="window.location.href='nav/t.html'">Tutorial</button>
+        <button class="button button-quaternary" onclick="window.location.href='nav/v.html'">see versions</button>
+    </div>
+
+</body>
+</html>
