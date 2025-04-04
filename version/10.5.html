@@ -160,7 +160,7 @@
       z-index: 1000;
     }
   </style>
-              <link rel="icon" type="image/x-icon" href="../asset/grass.png">
+              <link rel="icon" type="image/x-icon" href="../2/grass.png">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </head>
 <body>
@@ -259,9 +259,9 @@
             };
             
             // Add textures for Kid Bob
-            blockTextures["kb.png"] = "asset/kb.png";
-            blockTextures["leftkb.png"] = "asset/leftkb.png";
-            blockTextures["trapkb.png"] = "asset/trapkb.png";
+            blockTextures["kb.png"] = "2/kb.png";
+            blockTextures["leftkb.png"] = "2/leftkb.png";
+            blockTextures["trapkb.png"] = "2/trapkb.png";
             
             // Spawn Kid Bob
             const x = Math.floor(Math.random() * Math.floor(canvas.width/blockSize)) * blockSize;
@@ -275,9 +275,9 @@
         },
         "JACOBWHEREISMYPENCIL": () => {
             // Add special block
-            blockTextures["finally I found them"] = "asset/oh.png";
+            blockTextures["finally I found them"] = "2/oh.png";
             textures["finally I found them"] = new Image();
-            textures["finally I found them"].src = "asset/oh.png";
+            textures["finally I found them"].src = "2/oh.png";
             
             // Add to menu
             filteredItems = Object.keys(blockTextures);
@@ -333,209 +333,209 @@
 
     // Block textures
     const blockTextures = {
-      "Grass": "asset/grass.png",
-      "Dirt": "asset/dirt.png",
-      "Stone": "asset/stone.png",
-      "Sand": "asset/sand.png",
-      "Sandstone": "asset/sandstone.png",
-      "Snow": "asset/snow.png",
-      "Gravel": "asset/gravel.png",
-      "Wood": "asset/wood.png",
-      "Brick": "asset/brick.png",
-      "Water": "asset/water.png",
-      "Lava": "asset/lava.png",
-      "Leaf": "asset/leaves.png",
-      "netherack": "asset/neth.png",
-      "beacon": "asset/beacon.png",
-      "blue glass": "asset/bglass.png",
-      "black shulker box": "asset/blacks.png",
-      "black wool": "asset/blackw.png",
-      "blue shulker box": "asset/blues.png",
-      "blue wool": "asset/bluew.png",
-      "coal ore": "asset/coal.png",
-      "copper ore": "asset/copper.png",
-      "crying obsidian": "asset/cryo.png",
-      "diamond ore": "asset/diamond.png",
-      "green glass": "asset/gglass.png",
-      "glass": "asset/glass.png",
-      "gold ore": "asset/gold.png",
-      "gray shulker box": "asset/grays.png",
-      "gray wool": "asset/grayw.png",
-      "green shulker box": "asset/greens.png",
-      "green wool": "asset/greenw.png",
-      "iron ore": "asset/iron.png",
-      "lapiz block": "asset/lapizb.png",
-      "lightblue glass": "asset/lbglass.png",
-      "light blue wool": "asset/lightbw.png",
-      "magenta shulker box": "asset/magentas.png",
-      "magenta wool": "asset/magentaw.png",
-      "magenta glass": "asset/mglass.png",
-      "obsidian": "asset/obsidian.png",
-      "orange shulker box": "asset/oranges.png",
-      "orange wool": "asset/orangew.png",
-      "purple glass": "asset/pglass.png",
-      "purple shulker box": "asset/purples.png",
-      "purple wool": "asset/purplew.png",
-      "quartz ore": "asset/quart.png",
-      "red shulker box": "asset/reds.png",
-      "redstone ore": "asset/redstone.png",
-      "red wool": "asset/redw.png",
-      "red glass": "asset/rglass.png",
-      "slime block": "asset/slime.png",
-      "TNT": "asset/tnt.png",
-      "white shulker box": "asset/whites.png",
-      "white wool": "asset/whitew.png",
-      "yellow shulker box": "asset/yellows.png",
-      "yellow wool": "asset/yelloww.png",
-      "wooden slab": "asset/wslab.png",
-      "stone stairs": "asset/stones.png",
-      "stone stairs left": "asset/stonesl.png",
-      "wooden stair": "asset/stair.png",
-      "stone slab": "asset/slab.png",
-      "bed bottem": "asset/bedb.png",
-      "bed pillow": "asset/bedp.png",
-      "door bottem": "asset/doorb.png",
-      "door top": "asset/doort.png",
-      "doors": "asset/doors.png",
-      "netheraite": "asset/netheraite.png",
-      "plank": "asset/plank.png",
-      "right stair": "asset/rstair.png",
-      "crafting table": "asset/ctable.png",
-      "furnace": "asset/furnace.png",
-      "smoker": "asset/smoker.png",
-      "blast furnace": "asset/bfurnace.png",
-      "anvil": "asset/anvil.png",
-      "enchantment table": "asset/etable.png",
-      "smithing table": "asset/stable.png",
-      "fletching table": "asset/ftable.png",
-      "cartography table": "asset/catable.png",
-      "loom": "asset/loom.png",
-      "end portal (filled)": "asset/endf.png",
-      "end portal (empty)": "asset/ende.png",
-      "end portal": "asset/endp.png",
-      "nether portal": "asset/np.png",
-      "cobblestone": "asset/cobble.png",
-      "chest": "asset/chest.png",
-      "emerald ore": "asset/emerald.png",
-      "gold ore nether": "asset/goldn.png",
-      "netheraite block": "asset/netheraiteb.png",
-      "emerald block": "asset/emeraldb.png",
-      "gold block": "asset/goldb.png",
-      "redstone block": "asset/redstoneb.png",
-      "copper block": "asset/copperb.png",
-      "diamond block": "asset/diamondb.png",
-      "iron block": "asset/ironb.png",
-      "coal block": "asset/coalb.png",
-      "smoke": "asset/smoke.png",
-      "piston 1": "asset/piston1.png",
-      "piston 2": "asset/piston2.png",
-      "piston 3": "asset/piston3.png",
-      "piston 4": "asset/piston4.png",
-      "redstone tourch": "asset/redstonet.png",
-      "top wood slab": "asset/slab1.png",
-      "top stone slab": "asset/slab2.png",
-      "lever off": "asset/leverf.png",
-      "lever on": "asset/leveron.png",
-      "lamp on": "asset/lamp1.png",
-      "lamp off": "asset/lamp2.png",
-      "redstone activated": "asset/redstonea.png",
-      "redstone decativated": "asset/redstoned.png",    
-      "redstone activated(floor)": "asset/redstonefa.png",
-      "redstone deactivated(floor)": "asset/redstonedf.png",
-      "observer": "asset/observer.png",
-      "hopper": "asset/hopper.png",
-      "dripstone (point)": "asset/dripstone.png",
-      "dribstone (block)": "asset/dripstoneb.png",
-      "target": "asset/target.png",
-      "soul campfire": "asset/blue.png",
-      "campfire": "asset/fire.png",
-      "bee hive": "asset/beehive.png",
-      "bee hive w/ honey": "asset/honey.png",
-      "grindstone": "asset/grindstone.png",
-      "soil": "asset/soil.png",
-      "beetroot": "asset/beetroot.png",
-      "carrot": "asset/carrot.png",
-      "sugarcane": "asset/cane.png",
-      "hay bale": "asset/hay.png",
-      "barrel": "asset/barrel.png",
-      "Infect": "asset/infect.png",
-      "Cure": "asset/cure.png",
-      "Frog": "asset/infect.png",
-      "Flower": "asset/flower.png",
-      "Endstone": "asset/endstone.png",
-      "Purpur block": "asset/purpur.png",
-      "Purpur brick": "asset/purpurb.png",
-      "Nether brick": "asset/netherb.png",
-      "Dried ghast": "asset/dg.png",
-      "Bone block": "asset/boneb.png",
-      "Soul sand": "asset/ss.png",
-      "Soul soil": "asset/s.png",
-      "Bamboo": "asset/bamboo.png",
-      "Shulker mob (animateted)": "asset/hi.png",
-      "Bamboo plank": "asset/bamboop.png",
-      "Bamboo plank 2": "asset/bamboop2.png",
-      "Crimson wood": "asset/cw.png",
-      "Warped wood": "asset/ww.png",
-      "Cherry wood": "asset/chw.png",
-      "Cherry plank": "asset/cplank.png",
-      "Spruce wood": "asset/spruce.png",
-      "Spruce plank": "asset/sprucep.png",
-      "Pale oak": "asset/pale.png",
-      "Pale oak plank": "asset/palep.png",
-      "Stone brick": "asset/stoneb.png",
-      "Stone brick 2": "asset/stonebb.png",
-      "Pumpkin": "asset/pumpkin.png",
-      "Carved Pumpkin": "asset/cpumkin.png",
-      "Jack o lantern": "asset/jack.png",
-      "Melon": "asset/melon.png",
-      "Carved melon": "asset/cmelon.png",
-      "Mack o lantern": "asset/mack.png",
-      "Snow": "asset/snow.png",
-      "Clay": "asset/clay.png",
-      "JukeBox": "asset/jukebox.png",
-      "Granit": "asset/granit.png",
-      "Diorite": "asset/diorite.png",
-      "Monster Spawner": "asset/spawner.png",
-      "Zombie head": "asset/zhead.png",
-      "Wither skeleton head": "asset/whead.png",
-      "Bad wood (birch)": "asset/birch.png",
-      "Bad plank (birch plank)": "asset/birchp.png",
-      "Grass (particle)": "asset/g.png",
-      "Dried grass": "asset/gd.png",
-      "Cactus": "asset/cactus.png",
-      "Flower Cactus": "asset/fcactus.png",
-      "Rose Bush": "asset/rose.png",
-      "Depslate": "asset/d.png",
-      "Depslate redstone": "asset/dredstone.png",
-      "Depslate iron": "asset/diron.png",
-      "Depslate diamond": "asset/ddiamond.png",
-      "Depslate lapiz": "asset/dlapiz.png",
-      "lapiz ore": "asset/lapiz.png",
-      "Depslate emerald": "asset/demerald.png",
-      "Depslate Coal": "asset/dcoal.png",
-      "Depslate copper": "asset/dcopper.png",
-      "finally I found them": "asset/oh.png"
+      "Grass": "2/grass.png",
+      "Dirt": "2/dirt.png",
+      "Stone": "2/stone.png",
+      "Sand": "2/sand.png",
+      "Sandstone": "2/sandstone.png",
+      "Snow": "2/snow.png",
+      "Gravel": "2/gravel.png",
+      "Wood": "2/wood.png",
+      "Brick": "2/brick.png",
+      "Water": "2/water.png",
+      "Lava": "2/lava.png",
+      "Leaf": "2/leaves.png",
+      "netherack": "2/neth.png",
+      "beacon": "2/beacon.png",
+      "blue glass": "2/bglass.png",
+      "black shulker box": "2/blacks.png",
+      "black wool": "2/blackw.png",
+      "blue shulker box": "2/blues.png",
+      "blue wool": "2/bluew.png",
+      "coal ore": "2/coal.png",
+      "copper ore": "2/copper.png",
+      "crying obsidian": "2/cryo.png",
+      "diamond ore": "2/diamond.png",
+      "green glass": "2/gglass.png",
+      "glass": "2/glass.png",
+      "gold ore": "2/gold.png",
+      "gray shulker box": "2/grays.png",
+      "gray wool": "2/grayw.png",
+      "green shulker box": "2/greens.png",
+      "green wool": "2/greenw.png",
+      "iron ore": "2/iron.png",
+      "lapiz block": "2/lapizb.png",
+      "lightblue glass": "2/lbglass.png",
+      "light blue wool": "2/lightbw.png",
+      "magenta shulker box": "2/magentas.png",
+      "magenta wool": "2/magentaw.png",
+      "magenta glass": "2/mglass.png",
+      "obsidian": "2/obsidian.png",
+      "orange shulker box": "2/oranges.png",
+      "orange wool": "2/orangew.png",
+      "purple glass": "2/pglass.png",
+      "purple shulker box": "2/purples.png",
+      "purple wool": "2/purplew.png",
+      "quartz ore": "2/quart.png",
+      "red shulker box": "2/reds.png",
+      "redstone ore": "2/redstone.png",
+      "red wool": "2/redw.png",
+      "red glass": "2/rglass.png",
+      "slime block": "2/slime.png",
+      "TNT": "2/tnt.png",
+      "white shulker box": "2/whites.png",
+      "white wool": "2/whitew.png",
+      "yellow shulker box": "2/yellows.png",
+      "yellow wool": "2/yelloww.png",
+      "wooden slab": "2/wslab.png",
+      "stone stairs": "2/stones.png",
+      "stone stairs left": "2/stonesl.png",
+      "wooden stair": "2/stair.png",
+      "stone slab": "2/slab.png",
+      "bed bottem": "2/bedb.png",
+      "bed pillow": "2/bedp.png",
+      "door bottem": "2/doorb.png",
+      "door top": "2/doort.png",
+      "doors": "2/doors.png",
+      "netheraite": "2/netheraite.png",
+      "plank": "2/plank.png",
+      "right stair": "2/rstair.png",
+      "crafting table": "2/ctable.png",
+      "furnace": "2/furnace.png",
+      "smoker": "2/smoker.png",
+      "blast furnace": "2/bfurnace.png",
+      "anvil": "2/anvil.png",
+      "enchantment table": "2/etable.png",
+      "smithing table": "2/stable.png",
+      "fletching table": "2/ftable.png",
+      "cartography table": "2/catable.png",
+      "loom": "2/loom.png",
+      "end portal (filled)": "2/endf.png",
+      "end portal (empty)": "2/ende.png",
+      "end portal": "2/endp.png",
+      "nether portal": "2/np.png",
+      "cobblestone": "2/cobble.png",
+      "chest": "2/chest.png",
+      "emerald ore": "2/emerald.png",
+      "gold ore nether": "2/goldn.png",
+      "netheraite block": "2/netheraiteb.png",
+      "emerald block": "2/emeraldb.png",
+      "gold block": "2/goldb.png",
+      "redstone block": "2/redstoneb.png",
+      "copper block": "2/copperb.png",
+      "diamond block": "2/diamondb.png",
+      "iron block": "2/ironb.png",
+      "coal block": "2/coalb.png",
+      "smoke": "2/smoke.png",
+      "piston 1": "2/piston1.png",
+      "piston 2": "2/piston2.png",
+      "piston 3": "2/piston3.png",
+      "piston 4": "2/piston4.png",
+      "redstone tourch": "2/redstonet.png",
+      "top wood slab": "2/slab1.png",
+      "top stone slab": "2/slab2.png",
+      "lever off": "2/leverf.png",
+      "lever on": "2/leveron.png",
+      "lamp on": "2/lamp1.png",
+      "lamp off": "2/lamp2.png",
+      "redstone activated": "2/redstonea.png",
+      "redstone decativated": "2/redstoned.png",    
+      "redstone activated(floor)": "2/redstonefa.png",
+      "redstone deactivated(floor)": "2/redstonedf.png",
+      "observer": "2/observer.png",
+      "hopper": "2/hopper.png",
+      "dripstone (point)": "2/dripstone.png",
+      "dribstone (block)": "2/dripstoneb.png",
+      "target": "2/target.png",
+      "soul campfire": "2/blue.png",
+      "campfire": "2/fire.png",
+      "bee hive": "2/beehive.png",
+      "bee hive w/ honey": "2/honey.png",
+      "grindstone": "2/grindstone.png",
+      "soil": "2/soil.png",
+      "beetroot": "2/beetroot.png",
+      "carrot": "2/carrot.png",
+      "sugarcane": "2/cane.png",
+      "hay bale": "2/hay.png",
+      "barrel": "2/barrel.png",
+      "Infect": "2/infect.png",
+      "Cure": "2/cure.png",
+      "Frog": "2/infect.png",
+      "Flower": "2/flower.png",
+      "Endstone": "2/endstone.png",
+      "Purpur block": "2/purpur.png",
+      "Purpur brick": "2/purpurb.png",
+      "Nether brick": "2/netherb.png",
+      "Dried ghast": "2/dg.png",
+      "Bone block": "2/boneb.png",
+      "Soul sand": "2/ss.png",
+      "Soul soil": "2/s.png",
+      "Bamboo": "2/bamboo.png",
+      "Shulker mob (animateted)": "2/hi.png",
+      "Bamboo plank": "2/bamboop.png",
+      "Bamboo plank 2": "2/bamboop2.png",
+      "Crimson wood": "2/cw.png",
+      "Warped wood": "2/ww.png",
+      "Cherry wood": "2/chw.png",
+      "Cherry plank": "2/cplank.png",
+      "Spruce wood": "2/spruce.png",
+      "Spruce plank": "2/sprucep.png",
+      "Pale oak": "2/pale.png",
+      "Pale oak plank": "2/palep.png",
+      "Stone brick": "2/stoneb.png",
+      "Stone brick 2": "2/stonebb.png",
+      "Pumpkin": "2/pumpkin.png",
+      "Carved Pumpkin": "2/cpumkin.png",
+      "Jack o lantern": "2/jack.png",
+      "Melon": "2/melon.png",
+      "Carved melon": "2/cmelon.png",
+      "Mack o lantern": "2/mack.png",
+      "Snow": "2/snow.png",
+      "Clay": "2/clay.png",
+      "JukeBox": "2/jukebox.png",
+      "Granit": "2/granit.png",
+      "Diorite": "2/diorite.png",
+      "Monster Spawner": "2/spawner.png",
+      "Zombie head": "2/zhead.png",
+      "Wither skeleton head": "2/whead.png",
+      "Bad wood (birch)": "2/birch.png",
+      "Bad plank (birch plank)": "2/birchp.png",
+      "Grass (particle)": "2/g.png",
+      "Dried grass": "2/gd.png",
+      "Cactus": "2/cactus.png",
+      "Flower Cactus": "2/fcactus.png",
+      "Rose Bush": "2/rose.png",
+      "Depslate": "2/d.png",
+      "Depslate redstone": "2/dredstone.png",
+      "Depslate iron": "2/diron.png",
+      "Depslate diamond": "2/ddiamond.png",
+      "Depslate lapiz": "2/dlapiz.png",
+      "lapiz ore": "2/lapiz.png",
+      "Depslate emerald": "2/demerald.png",
+      "Depslate Coal": "2/dcoal.png",
+      "Depslate copper": "2/dcopper.png",
+      "finally I found them": "2/oh.png"
         };
 
     const spawnEggTextures = {
-      "Frog Spawn Egg": "asset/frog_egg.png",
-      "Cow Spawn Egg": "asset/cow_egg.png",
-      "Chicken Spawn Egg": "asset/chicken_egg.png",
-      "Chick Spawn Egg": "asset/chick_egg.png",
-      "Duck Spawn Egg": "asset/duck_egg.png",
-      "Bob Spawn Egg": "asset/bob_egg.png",
-      "Lilly Spawn Egg": "asset/lilly_egg.png",
-      "Zombie Spawn Egg": "asset/zombie_egg.png",
-      "Baby Spawn Egg": "asset/baby_egg.png",
-      "Child Spawn Egg": "asset/child_egg.png",
-      "Bee Spawn Egg": "asset/bee_egg.png",
-      "Ghast Spawn Egg": "asset/ghast_egg.png",
-      "Iron Golem Spawn Egg": "asset/irong_egg.png",
-      "Wither Spawn Egg": "asset/wither_egg.png",
+      "Frog Spawn Egg": "2/frog_egg.png",
+      "Cow Spawn Egg": "2/cow_egg.png",
+      "Chicken Spawn Egg": "2/chicken_egg.png",
+      "Chick Spawn Egg": "2/chick_egg.png",
+      "Duck Spawn Egg": "2/duck_egg.png",
+      "Bob Spawn Egg": "2/bob_egg.png",
+      "Lilly Spawn Egg": "2/lilly_egg.png",
+      "Zombie Spawn Egg": "2/zombie_egg.png",
+      "Baby Spawn Egg": "2/baby_egg.png",
+      "Child Spawn Egg": "2/child_egg.png",
+      "Bee Spawn Egg": "2/bee_egg.png",
+      "Ghast Spawn Egg": "2/ghast_egg.png",
+      "Iron Golem Spawn Egg": "2/irong_egg.png",
+      "Wither Spawn Egg": "2/wither_egg.png",
     };
 
-    const errorTexture = "asset/er.png";
-    const deathTexture = "asset/death.png";
+    const errorTexture = "2/er.png";
+    const deathTexture = "2/death.png";
     let currentBlockType = "Grass";
     let showMenu = false;
     let textures = {};
@@ -708,7 +708,7 @@
         this.width = blockSize;
         this.height = blockSize;
         this.spriteSheet = new Image();
-        this.spriteSheet.src = "asset/hi.png";
+        this.spriteSheet.src = "2/hi.png";
         this.frameWidth = 32;
         this.frameHeight = 32;
         this.totalFrames = 16;
@@ -756,7 +756,7 @@
         this.faction = faction;
         
         this.texture = new Image();
-        this.texture.src = type === "fireball" ? "asset/fireball.png" : "asset/wither_skull.png";
+        this.texture.src = type === "fireball" ? "2/fireball.png" : "2/wither_skull.png";
         
         // Calculate direction
         const dx = targetX - x;
@@ -910,15 +910,15 @@
         if (this.hasCrown) this.textureName = "crown";
 
         this.rightTexture = new Image();
-        this.rightTexture.src = `asset/${this.textureName}.png`;
+        this.rightTexture.src = `2/${this.textureName}.png`;
         this.rightTexture.onerror = () => { this.rightTexture.src = errorTexture; };
 
         this.leftTexture = new Image();
-        this.leftTexture.src = `asset/left${this.textureName}.png`;
+        this.leftTexture.src = `2/left${this.textureName}.png`;
         this.leftTexture.onerror = () => { this.leftTexture.src = errorTexture; };
 
         this.trappedTexture = new Image();
-        this.trappedTexture.src = `asset/trap${this.textureName}.png`;
+        this.trappedTexture.src = `2/trap${this.textureName}.png`;
         this.trappedTexture.onerror = () => { this.trappedTexture.src = errorTexture; };
 
         this.deathTexture = new Image();
@@ -1166,9 +1166,9 @@
                 // Infect - turn into zombie
                 otherAnimal.isZombie = true;
                 otherAnimal.textureName = "zombie";
-                otherAnimal.rightTexture.src = `asset/zombie.png`;
-                otherAnimal.leftTexture.src = `asset/leftzombie.png`;
-                otherAnimal.trappedTexture.src = `asset/trapzombie.png`;
+                otherAnimal.rightTexture.src = `2/zombie.png`;
+                otherAnimal.leftTexture.src = `2/leftzombie.png`;
+                otherAnimal.trappedTexture.src = `2/trapzombie.png`;
                 otherAnimal.faction = FACTION.HOSTILE;
                 otherAnimal.type = "Zombie";
                 otherAnimal.speed = animalProperties["Zombie"].speed;
@@ -1218,22 +1218,22 @@
               if (block.type === "Infect") {
                 this.isZombie = true;
                 this.textureName = "zombie";
-                this.rightTexture.src = `asset/zombie.png`;
-                this.leftTexture.src = `asset/leftzombie.png`;
-                this.trappedTexture.src = `asset/trapzombie.png`;
+                this.rightTexture.src = `2/zombie.png`;
+                this.leftTexture.src = `2/leftzombie.png`;
+                this.trappedTexture.src = `2/trapzombie.png`;
               } else if (block.type === "Cure") {
                 const nonZombieTypes = Object.keys(animalProperties).filter(type => type !== "Zombie");
                 const randomType = nonZombieTypes[Math.floor(Math.random() * nonZombieTypes.length)];
                 this.isZombie = false;
                 this.textureName = animalProperties[randomType].textureName;
-                this.rightTexture.src = `asset/${this.textureName}.png`;
-                this.leftTexture.src = `asset/left${this.textureName}.png`;
-                this.trappedTexture.src = `asset/trap${this.textureName}.png`;
+                this.rightTexture.src = `2/${this.textureName}.png`;
+                this.leftTexture.src = `2/left${this.textureName}.png`;
+                this.trappedTexture.src = `2/trap${this.textureName}.png`;
               } else if (block.type === "Frog") {
                 this.textureName = "frog";
-                this.rightTexture.src = `asset/frog.png`;
-                this.leftTexture.src = `asset/leftfrog.png`;
-                this.trappedTexture.src = `asset/trapfrog.png`;
+                this.rightTexture.src = `2/frog.png`;
+                this.leftTexture.src = `2/leftfrog.png`;
+                this.trappedTexture.src = `2/trapfrog.png`;
               }
 
               if (block.type === "Lava") {
@@ -1297,18 +1297,18 @@
             this.isBaby = false;
             this.isChild = true;
             this.growthTimer = 0;
-            this.rightTexture.src = `asset/child.png`;
-            this.leftTexture.src = `asset/leftchild.png`;
-            this.trappedTexture.src = `asset/trapchild.png`;
+            this.rightTexture.src = `2/child.png`;
+            this.leftTexture.src = `2/leftchild.png`;
+            this.trappedTexture.src = `2/trapchild.png`;
           } else if (this.isChild && this.growthTimer >= 3600) {
             const newType = Math.random() < 0.5 ? "Bob" : "Lilly";
             this.type = newType;
             this.textureName = newType.toLowerCase();
             this.isChild = false;
             this.growthTimer = 0;
-            this.rightTexture.src = `asset/${this.textureName}.png`;
-            this.leftTexture.src = `asset/left${this.textureName}.png`;
-            this.trappedTexture.src = `asset/trap${this.textureName}.png`;
+            this.rightTexture.src = `2/${this.textureName}.png`;
+            this.leftTexture.src = `2/left${this.textureName}.png`;
+            this.trappedTexture.src = `2/trap${this.textureName}.png`;
           }
         }
 
@@ -2146,9 +2146,9 @@
                 animal.isZombie = animalData.isZombie;
                 if (animal.isZombie) {
                   animal.textureName = "zombie";
-                  animal.rightTexture.src = `asset/zombie.png`;
-                  animal.leftTexture.src = `asset/leftzombie.png`;
-                  animal.trappedTexture.src = `asset/trapzombie.png`;
+                  animal.rightTexture.src = `2/zombie.png`;
+                  animal.leftTexture.src = `2/leftzombie.png`;
+                  animal.trappedTexture.src = `2/trapzombie.png`;
                 }
               }
               
@@ -2313,13 +2313,13 @@
       reader.onload = function (e) {
         const zip = new JSZip();
         zip.loadAsync(e.target.result).then((zip) => {
-          const assetFolder = zip.folder("asset");
-          if (!assetFolder) {
-            alert("The ZIP file must contain an 'asset' folder.");
+          const 2Folder = zip.folder("2");
+          if (!2Folder) {
+            alert("The ZIP file must contain an '2' folder.");
             return;
           }
 
-          const blocksTexture = assetFolder.file("blocks.png");
+          const blocksTexture = 2Folder.file("blocks.png");
           if (blocksTexture) {
             blocksTexture.async("blob").then((blob) => {
               const url = URL.createObjectURL(blob);
@@ -2334,9 +2334,9 @@
             });
           }
 
-          const allTexture = assetFolder.file("all.png");
-          const leftAllTexture = assetFolder.file("leftall.png");
-          const trapAllTexture = assetFolder.file("trapall.png");
+          const allTexture = 2Folder.file("all.png");
+          const leftAllTexture = 2Folder.file("leftall.png");
+          const trapAllTexture = 2Folder.file("trapall.png");
 
           if (allTexture && leftAllTexture && trapAllTexture) {
             Promise.all([
@@ -2364,7 +2364,7 @@
               alert("Failed to load mob textures. Check the console for details.");
             });
           } else {
-            assetFolder.forEach((relativePath, file) => {
+            2Folder.forEach((relativePath, file) => {
               if (!file.dir) {
                 const fileName = relativePath.split("/").pop();
                 const textureKey = Object.keys(blockTextures).find(
