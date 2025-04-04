@@ -7,6 +7,7 @@ MULTICREATE =D
 
 
 Multicreate is a game inspired by minecraft but 2d and more un realistic textures =D and it is from the multicreate (the one with out textures) and it tool me so far and wide also it was all made by deepseek and chatgpt so ty for making this game for me also the images where made by me in piskel 
+yes this image was made in canva (dont sue me mojang or canva all is loved and suported =D )
 
 **placing blocks**
 
