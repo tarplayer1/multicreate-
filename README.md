@@ -22,8 +22,7 @@ the menu for mobs =D
 also if you middle 
 click air and you have 1 
   lilly and 1 bob they will
- make a baby and if you middle 
- sound
+ make a child
                                                                               
   **deleting blocks / mobs**
 
