@@ -28,6 +28,9 @@ click air and you have 1
 
  just click them with left click
 
+**overall**
+this game is free to play just download and press nidex and your good to go no catch no nothing (ad at least i didnt sell it to microsoft so thats that beat that minecraft)
+
                                                                         
                                                                               
 
